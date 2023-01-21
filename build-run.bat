@@ -9,3 +9,4 @@ if [%VAR%] == [] (
 )
 docker exec -t "kfs-builder" sh /home/kfs/tools/docker-entrypoint.sh
 docker container stop kfs-builder
+qemu-system-i386 -s -cdrom ./bin/kfs.iso

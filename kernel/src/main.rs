@@ -7,9 +7,7 @@ use core::panic::PanicInfo;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    loop {
-
-    }
+    loop {}
 }
 
 // we should not mangle the name so the multiboot can find it at link time

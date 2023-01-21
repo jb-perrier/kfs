@@ -15,7 +15,7 @@ before:
 
 link: boot kernel
 	@echo "$(_CYAN)Linking Boot + Kernel ...$(_END)"
-	@ld -m elf_i386 -T /home/kfs/tools/link.ld -o /home/kfs/build/kfs $(BOOT_OBJS) /home/kfs/build/libkernel.a 
+	@ld -m elf_i386 -T /home/kfs/tools/link.ld -o /home/kfs/build/kfs.bin $(BOOT_OBJS) /home/kfs/build/libkernel.a 
 	@echo "$(_BOLD)$(_GREEN)Done$(_END)"
 
 kernel:
@@ -37,8 +37,8 @@ image: link
 	@echo "$(_CYAN)Building image ...$(_END)"
 	@mkdir -p ./tmp/boot/grub/
 	@cp ./boot/grub.cfg ./tmp/boot/grub/grub.cfg
-	@cp ./build/kfs ./tmp/boot
-	@grub-file --is-x86-multiboot ./tmp/boot/kfs
+	@cp ./build/kfs.bin ./tmp/boot
+	@grub-file --is-x86-multiboot ./tmp/boot/kfs.bin
 	@mkdir -p ./bin/
 	@grub-mkrescue -o ./bin/kfs.iso --compress=xz ./tmp/
 	@rm -rf ./tmp

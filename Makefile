@@ -1,9 +1,5 @@
 include ./tools/colors.mk
 
-NAME				=		kfs
-IMAGE				=		kfs.iso
-LINK_SCRIPT			=		scripts/link.ld
-
 .PHONY: all before boot link kernel clean fclean re
 
 all: before boot kernel link 

@@ -4,11 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-path = "./src/main.rs"
+path = "./src/kernel.rs"
 crate-type = ["staticlib"]
-
-[unstable]
-build-std = ["core"]
 
 [profile.dev]
 panic = "abort"

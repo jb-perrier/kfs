@@ -1,5 +1,9 @@
 include ./tools/colors.mk
 
+BOOT_FILES	:=	$(shell cd boot && ls ${prefix}*.asm)
+BOOT_SRCS	:=	$(patsubst %.asm,./boot/%.asm,$(BOOT_FILES))
+BOOT_OBJS	:=	$(patsubst ./boot/%.asm,./build/%.o,$(BOOT_SRCS))
+
 .PHONY: all before boot link kernel image clean fclean re run
 
 all: before image
@@ -11,7 +15,7 @@ before:
 
 link: boot kernel
 	@echo "$(_CYAN)Linking Boot + Kernel ...$(_END)"
-	@ld -m elf_i386 -T /home/kfs/tools/link.ld -o /home/kfs/build/kfs /home/kfs/build/start.o /home/kfs/build/libkernel.a
+	@ld -m elf_i386 -T /home/kfs/tools/link.ld -o /home/kfs/build/kfs $(BOOT_OBJS) /home/kfs/build/libkernel.a 
 	@echo "$(_BOLD)$(_GREEN)Done$(_END)"
 
 kernel:
@@ -20,9 +24,13 @@ kernel:
 	@cp ./build/kernel/target/debug/libkernel.a ./build/libkernel.a
 	@echo "$(_GREEN)Done$(_END)"
 
-boot:
+./build/%.o: ./boot/%.asm
+	@nasm -f elf32 -g -F dwarf $< -o $@
+
+before_boot:
 	@echo "$(_CYAN)Building boot ...$(_END)"
-	@nasm -f elf32 ./boot/start.asm -o ./build/start.o
+
+boot: $(BOOT_OBJS)
 	@echo "$(_BOLD)$(_GREEN)Done$(_END)"
 
 image: link

@@ -22,9 +22,10 @@ _start:
 	; we are in 32 bits protected mode
  
 	; setup the stack
-	; x82 stack grow downwards
+	; x82 stack grow downwards, so we need to start from the top
 	mov esp, stack_top
  
+	; TODO: use multiboot_info struct in register EBX to get a nice memory map and pass it to kernel allocator
 	; TODO: Enabling floating point instructions, instructions set
 	; TODO: load GDT
     ; ABI requires the stack to be aligned on 16 bytes on the call, keep that in mind if adding code above

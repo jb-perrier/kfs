@@ -2,6 +2,7 @@
 #![no_std]
 // we provide ur own !
 #![no_main]
+#![allow(unused)]
 
 mod libc;
 mod vga;

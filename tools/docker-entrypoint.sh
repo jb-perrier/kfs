@@ -1,4 +1,4 @@
 cd /home/kfs/
-. $HOME/.cargo/env;
+. $HOME/.cargo/env
 make clean
 make all

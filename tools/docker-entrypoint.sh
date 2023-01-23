@@ -1,4 +1,3 @@
-cd /home/kfs/
 . $HOME/.cargo/env
-make clean
-make all
+make -f /home/kfs/Makefile clean
+make -f /home/kfs/Makefile all

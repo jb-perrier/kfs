@@ -1,13 +1,13 @@
-include ./tools/colors.mk
+include /home/kfs/tools/colors.mk
 
-BOOT_FILES	:=	$(shell cd boot && ls ${prefix}*.asm)
-BOOT_SRCS	:=	$(patsubst %.asm,./boot/%.asm,$(BOOT_FILES))
-BOOT_OBJS	:=	$(patsubst ./boot/%.asm,./build/%.o,$(BOOT_SRCS))
+BOOT_FILES	:=	$(shell cd /home/kfs/boot && ls ${prefix}*.asm)
+BOOT_SRCS	:=	$(patsubst %.asm,/home/kfs/boot/%.asm,$(BOOT_FILES))
+BOOT_OBJS	:=	$(patsubst /home/kfs/boot/%.asm,/home/kfs/build/%.o,$(BOOT_SRCS))
 
 .PHONY: all before boot link kernel image clean fclean re run
 
 all: before image
-	@mkdir -p bin
+	@mkdir -p /home/kfs/bin
 	@echo "Build finished !"
 
 before:
@@ -20,11 +20,11 @@ link: boot kernel
 
 kernel:
 	@echo "$(_CYAN)Building kernel ...$(_END)"
-	@cd kernel && cargo build --target-dir=../build/kernel -Z build-std=core
-	@cp ./build/kernel/target/debug/libkernel.a ./build/libkernel.a
+	@cd /home/kfs/kernel && cargo build --target-dir=../build/kernel -Z build-std=core
+	@cp /home/kfs/build/kernel/target/debug/libkernel.a /home/kfs/build/libkernel.a
 	@echo "$(_GREEN)Done$(_END)"
 
-./build/%.o: ./boot/%.asm
+/home/kfs/build/%.o: /home/kfs/boot/%.asm
 	@nasm -f elf32 -g -F dwarf $< -o $@
 
 before_boot:
@@ -35,25 +35,25 @@ boot: $(BOOT_OBJS)
 
 image: link
 	@echo "$(_CYAN)Building image ...$(_END)"
-	@mkdir -p ./tmp/boot/grub/
-	@cp ./boot/grub.cfg ./tmp/boot/grub/grub.cfg
-	@cp ./build/kfs.bin ./tmp/boot
-	@grub-file --is-x86-multiboot ./tmp/boot/kfs.bin
-	@mkdir -p ./bin/
-	@grub-mkrescue -o ./bin/kfs.iso --compress=xz ./tmp/
-	@rm -rf ./tmp
+	@mkdir -p /home/kfs/tmp/boot/grub/
+	@cp /home/kfs/boot/grub.cfg /home/kfs/tmp/boot/grub/grub.cfg
+	@cp /home/kfs/build/kfs.bin /home/kfs/tmp/boot
+	@grub-file --is-x86-multiboot /home/kfs/tmp/boot/kfs.bin
+	@mkdir -p /home/kfs/bin/
+	@grub-mkrescue -o ./bin/kfs.iso --compress=xz /home/kfs/tmp/
+	@rm -rf /home/kfs/tmp
 	@echo "$(_BOLD)$(_GREEN)Done$(_END)"
 
 clean:
-	@rm -rf ./kernel/target
-	@rm -rf ./build
+	@rm -rf /home/kfs/kernel/target
+	@rm -rf /home/kfs/build
 	@echo "$(_YELLOW)Intermediate objects deleted !$(_END)" 
 
 fclean: clean
-	@rm ./bin
+	@rm /home/kfs/bin
 	@echo "$(_YELLOW)Binaries deleted !$(_END)" 
 
 re: fclean all
 
 run:
-	@qemu-system-i386 -s -cdrom ./bin/kfs.iso
+	@qemu-system-i386 -s -cdrom /home/kfs/bin/kfs.iso

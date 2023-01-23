@@ -40,7 +40,7 @@ image: link
 	@cp /home/kfs/build/kfs.bin /home/kfs/tmp/boot
 	@grub-file --is-x86-multiboot /home/kfs/tmp/boot/kfs.bin
 	@mkdir -p /home/kfs/bin/
-	@grub-mkrescue -o ./bin/kfs.iso --compress=xz /home/kfs/tmp/
+	@grub-mkrescue -o /home/kfs/bin/kfs.iso --compress=xz /home/kfs/tmp/
 	@rm -rf /home/kfs/tmp
 	@echo "$(_BOLD)$(_GREEN)Done$(_END)"
 

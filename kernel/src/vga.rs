@@ -40,7 +40,7 @@ impl VGA {
         let mut i: isize = 0;
         while i < VGA_BUFFER as isize {
             let value = VGA_ADDR.offset(i).cast_mut();
-            *value = 0x0F as u8;
+            *value = ' ' as u8;
             i += 1;
         }
     }
@@ -52,12 +52,24 @@ impl VGA {
     
     #[inline]
     pub unsafe fn write_with_colors(&mut self, c: char, fore_color: &Colors, back_color: &Colors) {
-        let rindex = self.index * 2;
-        let cha = VGA_ADDR.offset(rindex).cast_mut();
-        *cha = c as u8;
-        let col = VGA_ADDR.offset(rindex + 1).cast_mut();
-        *col = (*back_color as u8) << 5 | *fore_color as u8;
-        self.index += 1;
+        if c == '\n'{
+            let mut i: isize = self.index * 2;
+             while i == 0 || i % ((VGA_COLUMNS as isize) * 2) > 0 {
+            let value = VGA_ADDR.offset(i).cast_mut();
+            *value = ' ' as u8;
+            let col = VGA_ADDR.offset(i + 1).cast_mut();
+            *col = (Colors::Black as u8) << 5 | Colors::Black as u8;
+            i += 2;
+            self.index += 1;}
+        }
+        else {
+            let rindex = self.index * 2;
+            let cha = VGA_ADDR.offset(rindex).cast_mut();
+            *cha = c as u8;
+            let col = VGA_ADDR.offset(rindex + 1).cast_mut();
+            *col = (*back_color as u8) << 5 | *fore_color as u8;
+            self.index += 1;
+        }
     }
 
     pub unsafe fn write_str(&mut self, str: &str) {

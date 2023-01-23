@@ -6,6 +6,7 @@
 mod libc;
 mod vga;
 
+use vga::*;
 use core::panic::PanicInfo;
 
 #[panic_handler]
@@ -16,9 +17,10 @@ fn panic(_info: &PanicInfo) -> ! {
 // we should not mangle the name so the multiboot can find it at link time
 #[no_mangle]
 pub unsafe extern "C" fn kmain() -> ! {
-    let mut vga = vga::VGA::new();
+    let mut vga = VGA::new();
     //vga::clear();
-    vga.write_str("Hello mes amis", 0);
+    vga.write_str("Hello default colors");
+    vga.write_str_with_colors("That's cool with other colors !", &Colors::Green, &Colors::Black);
     // KERNEL LOGIC
     loop {}
 }

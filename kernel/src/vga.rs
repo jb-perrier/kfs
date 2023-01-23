@@ -4,6 +4,27 @@ const VGA_COLUMNS: u32 = 80;
 const VGA_MAX: u32 = VGA_ROWS * VGA_COLUMNS;
 const VGA_BUFFER: u32 = VGA_MAX * 2;
 
+#[repr(u8)]
+#[derive(Copy, Clone)]
+pub enum Colors {
+    Black = 0,
+    Blue = 1,
+    Green = 2,
+    Cyan = 3,
+    Red = 4,
+    Purple = 5,
+    Brown = 6,
+    Gray = 7,
+    DarkGray = 8,
+    LightBlue = 9,
+    LightGreen = 10,
+    LightCyan = 11,
+    LightRed = 12,
+    LightPurple = 13,
+    Yellow = 14,
+    White = 15,
+}
+
 pub struct VGA {
     index: isize,
 }
@@ -25,18 +46,29 @@ impl VGA {
     }
     
     #[inline]
-    pub unsafe fn write(&mut self, c: char, color: u8) {
+    pub unsafe fn write(&mut self, c: char) {
+        self.write_with_colors(c, &Colors::White, &Colors::Black);
+    }
+    
+    #[inline]
+    pub unsafe fn write_with_colors(&mut self, c: char, fore_color: &Colors, back_color: &Colors) {
         let rindex = self.index * 2;
         let cha = VGA_ADDR.offset(rindex).cast_mut();
         *cha = c as u8;
         let col = VGA_ADDR.offset(rindex + 1).cast_mut();
-        *col = 0x07;
+        *col = (*back_color as u8) << 5 | *fore_color as u8;
         self.index += 1;
     }
-    
-    pub unsafe fn write_str(&mut self, str: &str, color: u8) {
+
+    pub unsafe fn write_str(&mut self, str: &str) {
         for c in str.chars() {
-            self.write(c, color);
+            self.write(c);
+        }
+    }
+
+    pub unsafe fn write_str_with_colors(&mut self, str: &str, fore_color: &Colors, back_color: &Colors) {
+        for c in str.chars() {
+            self.write_with_colors(c, fore_color, back_color);
         }
     }
 }

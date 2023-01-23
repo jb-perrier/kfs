@@ -16,8 +16,9 @@ fn panic(_info: &PanicInfo) -> ! {
 // we should not mangle the name so the multiboot can find it at link time
 #[no_mangle]
 pub unsafe extern "C" fn kmain() -> ! {
+    let mut vga = vga::VGA::new();
     //vga::clear();
-    vga::write('H', 0);
+    vga.write_str("Hello mes amis", 0);
     // KERNEL LOGIC
     loop {}
 }

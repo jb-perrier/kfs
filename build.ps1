@@ -1,4 +1,4 @@
-.\tools\install-fake-toolchain-rust-analyzer.bat
+.\tools\install-fake-toolchain-rust-analyzer.ps1
 docker build ./tools -t kfs-builder
 $result = docker ps -a -q -f "name=kfs-builder"
 if ([string]::IsNullOrEmpty($result))

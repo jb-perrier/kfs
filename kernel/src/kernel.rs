@@ -28,7 +28,7 @@ pub unsafe extern "C" fn kmain() -> ! {
     vga.write_str_with_colors("  |_|_\\  \\__,_|   _\\__|   _|_|_   \\___/   |___/ \n\r", &Colors::Green, &Colors::Black);
     vga.write_str("_|\"\"\"\"\"|_|\"\"\"\"\"|_|\"\"\"\"\"|_|\"\"\"\"\"|_|\"\"\"\"\"|_|\"\"\"\"\"| \n\r");
     vga.write_str("\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-'\"`-0-0-' \n\r");
-    vga.write_str("\n\raaaaaa\nbbbbb");
+
 
     vga.write_str("\n\r\n\r>");
     // KERNEL LOGIC

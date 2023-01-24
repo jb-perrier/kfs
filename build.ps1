@@ -10,4 +10,4 @@ if ([string]::IsNullOrEmpty($result))
 # docker exec -t "kfs-builder" sh /home/kfs/tools/docker-entrypoint.sh
 docker exec -t "kfs-builder" bash -c 'export PATH=/root/.cargo/bin:$PATH & make -f /home/kfs/Makefile'
 
-docker container stop kfs-builder
+# docker kill container kfs-builder

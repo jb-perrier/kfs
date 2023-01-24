@@ -20,7 +20,7 @@ link: boot kernel
 
 kernel:
 	@echo "$(_CYAN)Building kernel ...$(_END)"
-	@cd /home/kfs/kernel && cargo build --target-dir=../build/kernel -Z build-std=core
+	@cd /home/kfs/kernel && /root/.cargo/bin/cargo build --target-dir=../build/kernel -Z build-std=core
 	@cp /home/kfs/build/kernel/target/debug/libkernel.a /home/kfs/build/libkernel.a
 	@echo "$(_GREEN)Done$(_END)"
 

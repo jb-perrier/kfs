@@ -13,5 +13,4 @@ rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
 
 RUN mkdir /home/kfs
 
-# ENTRYPOINT ["sh", "/home/kfs/tools/docker-entrypoint.sh"]
 ENTRYPOINT ["tail", "-f", "/dev/null"]

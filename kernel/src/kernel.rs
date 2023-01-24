@@ -21,6 +21,7 @@ fn panic(_info: &PanicInfo) -> ! {
 pub unsafe extern "C" fn kmain() -> ! {
     let mut vga = VGA::new();
     vga.clear();
+    
     vga.write_str_with_colors("   ___             _        _      ___     ___  \n\r", &Colors::Green, &Colors::Black);
     vga.write_str_with_colors("  | _ \\   __ _    | |_     (_)    / _ \\   / __|  \n\r", &Colors::Green, &Colors::Black);
     vga.write_str_with_colors("  |   /  / _` |   |  _|    | |   | (_) |  \\__ \\  \n\r", &Colors::Green, &Colors::Black);
@@ -30,6 +31,6 @@ pub unsafe extern "C" fn kmain() -> ! {
 
 
     vga.write_str("\n\r\n\r>");
-
+    vga.set_cursor_pos(8);
     loop {}
 }

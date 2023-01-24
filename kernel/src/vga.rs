@@ -56,10 +56,10 @@ impl VGA {
 
     #[inline]
     pub unsafe fn set_cursor_pos(&mut self, pos: u16) {
-        // asm::outb(0x3D4, 0x0F);
-        // asm::outb(0x3D5, (pos & 0xFF) as u16);
-        // asm::outb(0x3D4, 0x0E);
-        // asm::outb(0x3D5, ((pos >> 8) & 0xFF) as u16);
+        asm::outb(0x3D4, 0x0E);
+        asm::outb(0x3D5, pos >> 8);
+        asm::outb(0x3D4, 0x0F);
+        asm::outb(0x3D5, pos);
     }
 
     #[inline]

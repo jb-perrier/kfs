@@ -6,6 +6,7 @@
 
 mod libc;
 mod vga;
+mod asm;
 
 use vga::*;
 use core::panic::PanicInfo;
@@ -19,9 +20,7 @@ fn panic(_info: &PanicInfo) -> ! {
 #[no_mangle]
 pub unsafe extern "C" fn kmain() -> ! {
     let mut vga = VGA::new();
-    //vga::clear();
-        // vga.write_str("Hello default colors");
-    // vga.write_str_with_colors("That's cool with other colors !", &Colors::Green, &Colors::Black);
+    vga.clear();
     vga.write_str_with_colors("   ___             _        _      ___     ___  \n\r", &Colors::Green, &Colors::Black);
     vga.write_str_with_colors("  | _ \\   __ _    | |_     (_)    / _ \\   / __|  \n\r", &Colors::Green, &Colors::Black);
     vga.write_str_with_colors("  |   /  / _` |   |  _|    | |   | (_) |  \\__ \\  \n\r", &Colors::Green, &Colors::Black);
@@ -31,6 +30,6 @@ pub unsafe extern "C" fn kmain() -> ! {
 
 
     vga.write_str("\n\r\n\r>");
-    // KERNEL LOGIC
+
     loop {}
 }

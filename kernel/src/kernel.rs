@@ -32,5 +32,12 @@ pub unsafe extern "C" fn kmain() -> ! {
 
     vga.write_str("\n\r\n\r>");
     vga.set_cursor_pos(8);
-    loop {}
+    let mut i = 0;
+    loop {
+        asm::nop();
+        if i > 50000000 {
+            asm::shutdown();
+        }
+        i += 1;
+    }
 }

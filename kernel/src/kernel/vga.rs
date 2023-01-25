@@ -1,6 +1,6 @@
 use core::arch::asm;
 
-use crate::asm;
+use crate::kernel::asm;
 
 const VGA_ADDR: *const u8 = 0xB8000 as *const u8;
 const VGA_ROWS: u32 = 24;

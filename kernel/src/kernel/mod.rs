@@ -1,19 +1,23 @@
-// since there is no std library for ur kernel
-#![no_std]
-// we provide ur own !
-#![no_main]
-#![allow(unused)]
-
 mod libc;
 mod vga;
 mod asm;
+mod shell;
 
 use vga::*;
 use core::panic::PanicInfo;
 
+pub static mut INSTANCE: Kernel = Kernel{};
+
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
     loop {}
+}
+
+// wait for allocator impl
+pub trait Driver {
+    fn new() -> Self;
+    fn update();
+    fn destroy();
 }
 
 pub struct Kernel {
@@ -22,6 +26,10 @@ pub struct Kernel {
 
 impl Kernel {
     pub unsafe fn start(&mut self) {
+
+        // GDT
+        // IDT
+        // Paging
         let mut vga = VGA::new();
         vga.clear();
     
@@ -40,11 +48,4 @@ impl Kernel {
     pub unsafe fn shutdown() {
         asm::shutdown();
     }
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn kmain() -> ! {
-    let mut kernel = Kernel{};
-    kernel.start();
-    loop {}
 }

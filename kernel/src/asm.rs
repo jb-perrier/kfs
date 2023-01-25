@@ -11,3 +11,11 @@ pub unsafe fn inb(port: u16) -> u8 {
     asm!("in al, dx", in("dx") port as u16, out("al") return_val);
     return return_val;
 }
+
+extern "C" {
+    pub fn shutdown();
+    pub fn disable_interrupts();
+    pub fn enable_interrupts();
+    pub fn halt();
+    pub fn nop();
+}

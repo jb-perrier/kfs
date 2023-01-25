@@ -39,11 +39,9 @@ pub unsafe extern "C" fn kmain() -> ! {
 
 unsafe fn wait_and_shutdown() {
     let mut i = 0;
-    loop {
+    while i < 50000000 {
         asm::nop();
-        if i > 100000000 {
-            asm::shutdown();
-        }
         i += 1;
     }
+    asm::shutdown();
 }

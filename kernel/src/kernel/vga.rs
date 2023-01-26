@@ -83,7 +83,6 @@ impl VGA {
                 self.index += 1;
             }
         }
-        self.set_cursor_pos(self.index as u16);
     }
 
     pub unsafe fn write_str(&mut self, str: &str) {
@@ -102,4 +101,20 @@ impl VGA {
             self.write_with_colors(c, fore_color, back_color);
         }
     }
+
+    pub unsafe fn write_usize(&mut self, value: usize) {
+        let mut str: [char; 20] = ['\0';20];
+        let mut size = 0;
+        let mut num = value;
+        while num > 0 {
+            let digit = num % 10;
+            str[size] = ('0' as u8 + digit as u8) as char;
+            size += 1;
+            num = num / 10;
+        }
+        while size > 0 {
+            self.write(str[size - 1]);
+            size -= 1;
+        }
+    } 
 }

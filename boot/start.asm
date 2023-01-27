@@ -1,19 +1,28 @@
+extern kmain
+
+extern kernel_virtual_start
+extern kernel_virtual_end
+extern kernel_physical_start
+extern kernel_physical_end
+
 MBALIGN  equ  1 << 0
 MEMINFO  equ  1 << 1
 MBFLAGS  equ  MBALIGN | MEMINFO
 MAGIC    equ  0x1BADB002
 CHECKSUM equ -(MAGIC + MBFLAGS)
- 
+
+KERNEL_STACK_SIZE equ 16384
 ; multiboot header
 section .multiboot
 align 4
 	dd MAGIC
 	dd MBFLAGS
 	dd CHECKSUM
+
 section .bss
 align 16
 stack_bottom:
-resb 16384
+resb KERNEL_STACK_SIZE
 stack_top:
  
 section .text
@@ -29,9 +38,10 @@ _start:
 	; TODO: Enabling floating point instructions, instructions set
 	; TODO: load GDT
     ; ABI requires the stack to be aligned on 16 bytes on the call, keep that in mind if adding code above
-	push eax
+
+	add ebx, 1000000 ; physical address to virtual 
 	push ebx
-	extern kmain
+	push eax
 	call kmain
  
 	; infinite loop, since kmain returned while it should not

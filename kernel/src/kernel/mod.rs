@@ -49,10 +49,10 @@ impl Kernel {
         vga.clear();
         vga.set_index(0);
 
-        /*if ((*multiboot).flags >> 6 & 0x1) == 0 {
+        if ((*multiboot).flags >> 6 & 0x1) == 0 {
             vga.write_str("Invalid memory map from multiboot info !\n");
             infinite_loop!();
-        }*/
+        }
 
         // GDT
         // IDT
@@ -61,8 +61,12 @@ impl Kernel {
         vga.write_str_with_colors(include_str!("./header_top"), &Colors::Green, &Colors::Black);
         vga.write('\n');
         vga.write_str(include_str!("./header_bottom"));
+        vga.write('\n');
 
-        vga.write_str("\n\r\n\rkernel >");
+        vga.write_str("mmap size: ");
+        vga.write_usize((*multiboot).mmap_length as usize);
+        vga.write('\n');
+        vga.write_str("\n\rkernel >");
         let index = vga.get_index();
         vga.set_cursor_pos(index);
 

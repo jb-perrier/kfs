@@ -39,7 +39,6 @@ _start:
 	; TODO: load GDT
     ; ABI requires the stack to be aligned on 16 bytes on the call, keep that in mind if adding code above
 
-	add ebx, 1000000 ; physical address to virtual 
 	push ebx
 	push eax
 	call kmain

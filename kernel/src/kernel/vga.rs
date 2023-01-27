@@ -44,9 +44,17 @@ impl VGA {
             let cha = VGA_ADDR.offset(i).cast_mut();
             *cha = ' ' as u8;
             let col = VGA_ADDR.offset(i + 1).cast_mut();
-            *col = (0 as u8) << 5 | 0 as u8;
+            *col = (0 as u8) << 5 | Colors::White as u8;
             i += 2;
         }
+    }
+
+    pub fn set_index(&mut self, index: isize) {
+        self.index = index;
+    }
+
+    pub fn get_index(&self) -> isize {
+        self.index
     }
 
     #[inline]
@@ -55,11 +63,12 @@ impl VGA {
     }
 
     #[inline]
-    pub unsafe fn set_cursor_pos(&mut self, pos: u16) {
+    pub unsafe fn set_cursor_pos(&mut self, pos: isize) {
+        let u16pos = pos as u16;
         asm::outb(0x3D4, 0x0E);
-        asm::outb(0x3D5, pos >> 8);
+        asm::outb(0x3D5, u16pos >> 8);
         asm::outb(0x3D4, 0x0F);
-        asm::outb(0x3D5, pos);
+        asm::outb(0x3D5, u16pos);
     }
 
     #[inline]
@@ -103,18 +112,22 @@ impl VGA {
     }
 
     pub unsafe fn write_usize(&mut self, value: usize) {
-        let mut str: [char; 20] = ['\0';20];
+        if value == 0 {
+            self.write('0');
+            return;
+        }
+        let mut str: [char; 20] = ['0'; 20];
         let mut size = 0;
         let mut num = value;
-        while num > 0 {
+        while num != 0 {
             let digit = num % 10;
             str[size] = ('0' as u8 + digit as u8) as char;
             size += 1;
             num = num / 10;
         }
-        while size > 0 {
+        while size != 0 {
             self.write(str[size - 1]);
             size -= 1;
         }
-    } 
+    }
 }

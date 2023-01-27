@@ -1,20 +1,13 @@
 use super::*;
 
-
-pub struct Shell {
-
-}
+pub struct Shell {}
 
 impl Driver for Shell {
     fn new() -> Self {
-        Shell{}
+        Shell {}
     }
 
-    fn update() {
-        
-    }
+    fn update() {}
 
-    fn destroy() {
-
-    }
+    fn destroy() {}
 }

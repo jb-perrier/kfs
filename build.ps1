@@ -1,4 +1,7 @@
 .\tools\install-fake-toolchain-rust-analyzer.ps1
+cd kernel
+cargo fmt
+cd ..
 docker build ./tools -t kfs-builder
 $result = docker ps -a -q -f "name=kfs-builder"
 if ([string]::IsNullOrEmpty($result))

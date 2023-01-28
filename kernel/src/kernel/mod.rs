@@ -1,11 +1,14 @@
 pub mod asm;
+pub mod bits;
 pub mod libc;
 pub mod multiboot;
 pub mod shell;
 pub mod vga;
 
+use crate::kernel::multiboot::MmapEntry;
+
 use self::multiboot::Multiboot;
-use core::panic::PanicInfo;
+use core::{mem::size_of, panic::PanicInfo};
 use vga::*;
 
 pub static mut INSTANCE: Kernel = Kernel {};
@@ -31,7 +34,7 @@ pub trait Driver {
 pub struct Kernel {}
 
 impl Kernel {
-    pub unsafe fn start(&mut self, multiboot: *const Multiboot, magic: u32) {
+    pub unsafe fn start(&mut self, multiboot: &Multiboot, magic: u32) {
         let mut vga = VGA::new();
         vga.clear();
 
@@ -49,11 +52,40 @@ impl Kernel {
         vga.clear();
         vga.set_index(0);
 
-        if ((*multiboot).flags >> 6 & 0x1) == 0 {
+        if !bits::get_bit_at(multiboot.flags, 6) {
             vga.write_str("Invalid memory map from multiboot info !\n");
             infinite_loop!();
         }
 
+        vga.write_str("mmap_addr = ");
+        vga.write_usize(multiboot.mmap_addr as usize);
+        vga.write_str(" mmap_length = ");
+        vga.write_usize(multiboot.mmap_length as usize);
+        vga.write('\n');
+        let mut total_mem = 0 as usize;
+        let mut sector_count = 0;
+        let mmap_ptr = multiboot.mmap_addr as *const MmapEntry;
+        let mut offset = 0;
+        while offset < multiboot.mmap_length {
+            let entry = &*mmap_ptr.byte_offset(offset as isize);
+            offset += entry.size + 4; // 4 = sizeof(entry.size)
+            if entry.ty == multiboot::MEMORY_AVAILABLE {
+                total_mem += entry.len as usize;
+                sector_count += 1;
+                vga.write_str("sector size = ");
+                vga.write_usize(entry.len as usize);
+                vga.write_str(" index = ");
+                vga.write_usize(sector_count as usize);
+                vga.write('\n');
+            }
+        }
+
+        vga.write_str("total ram = ");
+        vga.write_usize(total_mem);
+        vga.write_str(" sector count = ");
+        vga.write_usize(sector_count as usize);
+        vga.write('\n');
+        infinite_loop!();
         // GDT
         // IDT
         // Paging
@@ -64,7 +96,7 @@ impl Kernel {
         vga.write('\n');
 
         vga.write_str("mmap size: ");
-        vga.write_usize((*multiboot).mmap_length as usize);
+        vga.write_usize(multiboot.mmap_length as usize);
         vga.write('\n');
         vga.write_str("\n\rkernel >");
         let index = vga.get_index();

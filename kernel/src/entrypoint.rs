@@ -9,6 +9,6 @@ mod kernel;
 
 #[no_mangle]
 pub unsafe extern "C" fn kmain(magic: u32, multiboot: *const kernel::multiboot::Multiboot) -> ! {
-    kernel::INSTANCE.start(multiboot, magic);
+    kernel::INSTANCE.start(&*multiboot, magic);
     loop {}
 }

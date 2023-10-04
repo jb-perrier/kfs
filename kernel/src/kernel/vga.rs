@@ -65,10 +65,10 @@ impl VGA {
     #[inline]
     pub unsafe fn set_cursor_pos(&mut self, pos: isize) {
         let u16pos = pos as u16;
-        asm::outb(0x3D4, 0x0E);
-        asm::outb(0x3D5, u16pos >> 8);
-        asm::outb(0x3D4, 0x0F);
-        asm::outb(0x3D5, u16pos);
+        asm::out_u16(0x3D4, 0x0E);
+        asm::out_u16(0x3D5, u16pos >> 8);
+        asm::out_u16(0x3D4, 0x0F);
+        asm::out_u16(0x3D5, u16pos);
     }
 
     #[inline]
@@ -109,6 +109,11 @@ impl VGA {
         for c in str.chars() {
             self.write_with_colors(c, fore_color, back_color);
         }
+    }
+
+    #[inline]
+    pub unsafe fn write_u8(&mut self, value: u8) {
+        self.write_usize(value as usize);
     }
 
     pub unsafe fn write_usize(&mut self, value: usize) {

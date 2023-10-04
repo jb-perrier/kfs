@@ -1,7 +1,7 @@
 FROM ubuntu:latest
 
 RUN apt update
-RUN apt upgrade
+RUN apt upgrade -y
 RUN apt install curl -y
 RUN apt install build-essential -y
 RUN apt install nasm -y

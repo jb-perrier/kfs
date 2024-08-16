@@ -14,9 +14,10 @@ pub unsafe fn in_u8(port: u16) -> u8 {
 
 #[inline]
 pub unsafe fn nop(count: usize) {
-    let i = 0;
+    let mut i = 0;
     while i < count {
         asm!("nop");
+        i += 1;
     }
 }
 

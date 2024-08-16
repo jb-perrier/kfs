@@ -1,4 +1,4 @@
-// since there is no std library for ur kernel
+// since there is no std library for our kernel
 #![no_std]
 // we provide ur own !
 #![no_main]

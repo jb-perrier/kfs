@@ -1,0 +1,1 @@
+#rustup target add i386-unknown-none

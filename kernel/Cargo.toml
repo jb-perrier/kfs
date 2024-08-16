@@ -12,3 +12,6 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[build]
+target = "i386-unknown-none"

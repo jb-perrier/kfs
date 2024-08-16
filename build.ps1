@@ -1,4 +1,4 @@
-.\tools\install-fake-toolchain-rust-analyzer.ps1
+.\tools\install-windows-target.ps1
 cd kernel
 cargo fmt
 cd ..

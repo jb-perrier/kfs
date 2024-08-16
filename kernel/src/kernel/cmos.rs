@@ -69,7 +69,7 @@ impl Cmos {
     }
 }
 
-unsafe fn is_updating() -> bool {
-    asm::out_u16(0x70, 0x0A);
-    (in_u8(0x71) & 0x80) == 1
-}
+// unsafe fn is_updating() -> bool {
+//     asm::out_u16(0x70, 0x0A);
+//     (in_u8(0x71) & 0x80) == 1
+// }

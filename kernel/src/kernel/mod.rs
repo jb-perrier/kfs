@@ -2,6 +2,7 @@ pub mod asm;
 pub mod bits;
 pub mod boot;
 pub mod cmos;
+pub mod gdt;
 pub mod libc;
 pub mod multiboot;
 pub mod shell;
@@ -11,6 +12,7 @@ pub mod vga;
 use crate::kernel::multiboot::MmapEntry;
 
 use self::{cmos::Cmos, multiboot::Multiboot, time::Time};
+use asm::{disable_interrupts, enable_interrupts};
 use core::{mem::size_of, panic::PanicInfo};
 use vga::*;
 
@@ -48,6 +50,11 @@ impl Kernel {
             vga.write_usize(magic as usize);
             infinite_loop!();
         }
+
+        // Initialize GDT
+        // disable_interrupts();
+        // gdt::init_gdt();
+        // enable_interrupts();
 
         // Handle multiboot data
         // vga.write_str("Multiboot found ! magic: ");
@@ -100,16 +107,19 @@ impl Kernel {
         // vga.write_str(":");
         // vga.write_u8(time.second);
         // vga.write('\n');
-        //infinite_loop!();
+
         // GDT
         // IDT
         // Paging
 
-        vga.write_str_with_colors(include_str!("./header_top"), &Colors::Green, &Colors::Black);
+        vga.write_str(include_str!("./header_42"));
         vga.write('\n');
-        vga.write_str(include_str!("./header_bottom"));
-        vga.write('\n');
-        vga.write_str("\n\rkernel>");
+
+        // vga.write_str_with_colors(include_str!("./header_top"), &Colors::Green, &Colors::Black);
+        // vga.write('\n');
+        // vga.write_str(include_str!("./header_bottom"));
+        // vga.write('\n');
+        // vga.write_str("\n\rkernel>");
         let index = vga.get_index();
         vga.set_cursor_pos(index);
 

@@ -29,11 +29,11 @@ pub enum Colors {
     White = 15,
 }
 
-pub struct VGA {
+pub struct Vga {
     index: isize,
 }
 
-impl VGA {
+impl Vga {
     pub fn new() -> Self {
         Self { index: 0 }
     }
@@ -42,9 +42,9 @@ impl VGA {
         let mut i: isize = 0;
         while i < VGA_BUFFER as isize {
             let cha = VGA_ADDR.offset(i).cast_mut();
-            *cha = ' ' as u8;
+            *cha = b' ';
             let col = VGA_ADDR.offset(i + 1).cast_mut();
-            *col = (0 as u8) << 5 | Colors::White as u8;
+            *col = Colors::White as u8;
             i += 2;
         }
     }
@@ -126,9 +126,9 @@ impl VGA {
         let mut num = value;
         while num != 0 {
             let digit = num % 10;
-            str[size] = ('0' as u8 + digit as u8) as char;
+            str[size] = (b'0' + digit as u8) as char;
             size += 1;
-            num = num / 10;
+            num /= 10;
         }
         while size != 0 {
             self.write(str[size - 1]);

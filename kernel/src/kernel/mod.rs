@@ -40,7 +40,7 @@ pub struct Kernel {
 
 impl Kernel {
     pub unsafe fn start(&mut self, multiboot: &Multiboot, magic: u32) {
-        let mut vga = VGA::new();
+        let mut vga = Vga::new();
         vga.clear();
 
         if magic != 0x2BADB002 {

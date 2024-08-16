@@ -33,7 +33,7 @@ impl Time {
             hour: cmos.hour,
             day: cmos.day,
             month: cmos.month,
-            year: year,
+            year,
         }
     }
 }

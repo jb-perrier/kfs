@@ -4,7 +4,7 @@ pub unsafe extern "C" fn strlen(ptr: *const char) -> isize {
     while *ptr.offset(i) != '\0' {
         i += 1;
     }
-    return i;
+    i
 }
 
 #[no_mangle]
@@ -14,7 +14,7 @@ pub unsafe extern "C" fn memcpy(dest: *mut u8, src: *const u8, n: isize) -> *con
         *dest.offset(i).cast() = src.offset(i);
         i += 1;
     }
-    return dest;
+    dest
 }
 
 #[no_mangle]
@@ -24,7 +24,7 @@ pub unsafe extern "C" fn memset(s: *mut i32, c: i32, n: isize) -> *mut i32 {
         *s.offset(i).cast() = c;
         i += 1;
     }
-    return s;
+    s
 }
 
 #[no_mangle]
@@ -36,5 +36,5 @@ pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, n: isize) -> i32 {
         }
         i += 1;
     }
-    return 0;
+    0
 }

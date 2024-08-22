@@ -57,18 +57,3 @@ pub union Symbol {
     pub aout_sym: AOutSymbol,
     pub elf_sec: ElfSection,
 }
-
-#[repr(C)]
-#[derive(Clone, Copy)]
-pub struct MmapEntry {
-    pub size: u32,
-    pub addr: u64,
-    pub len: u64,
-    pub ty: u32,
-}
-
-pub const MEMORY_AVAILABLE: u32 = 1;
-pub const MEMORY_RESERVED: u32 = 2;
-pub const MEMORY_ACPI_RECLAIMABLE: u32 = 3;
-pub const MEMORY_NVS: u32 = 4;
-pub const MEMORY_BADRAM: u32 = 5;

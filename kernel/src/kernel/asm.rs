@@ -1,7 +1,5 @@
 use core::arch::asm;
 
-use super::gdt::GdtDescriptor;
-
 #[inline]
 pub unsafe fn out_u16(port: u16, val: u16) {
     asm!("out dx, al", in("dx") port, in("al") val as i8);
@@ -24,10 +22,5 @@ pub unsafe fn nop(count: usize) {
 }
 
 extern "C" {
-    pub fn shutdown();
     pub fn disable_interrupts();
-    pub fn enable_interrupts();
-    pub fn halt();
-    pub fn load_gdt(gdt: *const GdtDescriptor);
-    pub fn check_gdt() -> u32;
 }

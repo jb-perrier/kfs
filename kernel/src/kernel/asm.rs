@@ -29,4 +29,5 @@ extern "C" {
     pub fn enable_interrupts();
     pub fn halt();
     pub fn load_gdt(gdt: *const GdtDescriptor);
+    pub fn check_gdt() -> u32;
 }

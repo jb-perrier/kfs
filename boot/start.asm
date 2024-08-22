@@ -45,6 +45,7 @@ _start:
  
 	; infinite loop, since kmain returned while it should not
 	cli
-.hang:	hlt
+.hang:
+	hlt
 	jmp .hang
 .end:

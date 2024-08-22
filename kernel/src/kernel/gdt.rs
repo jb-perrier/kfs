@@ -39,12 +39,13 @@ impl GdtEntry {
     }
 }
 
-pub fn init_gdt() {
+pub fn init_gdt() -> u32 {
     unsafe {
         let descriptor = GdtDescriptor {
             size: (core::mem::size_of::<[GdtEntry; GDT_SIZE]>() - 1) as u16,
             offset: addr_of!(GDT) as *const _ as u64,
         };
         asm::load_gdt(&descriptor);
+        asm::check_gdt()
     }
 }

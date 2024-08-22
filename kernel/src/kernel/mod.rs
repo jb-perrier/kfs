@@ -12,8 +12,9 @@ pub mod vga;
 use crate::kernel::multiboot::MmapEntry;
 
 use self::{cmos::Cmos, multiboot::Multiboot, time::Time};
-use asm::{disable_interrupts, enable_interrupts};
+use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
 use core::{mem::size_of, panic::PanicInfo};
+use gdt::init_gdt;
 use vga::*;
 
 pub static mut INSTANCE: Kernel = Kernel { time: Time::new() };
@@ -42,6 +43,8 @@ pub struct Kernel {
 
 impl Kernel {
     pub unsafe fn start(&mut self, multiboot: &Multiboot, magic: u32) {
+        // Disable interrupts until we setp the IDT
+        disable_interrupts();
         let mut vga = Vga::new();
         vga.clear();
 
@@ -52,9 +55,15 @@ impl Kernel {
         }
 
         // Initialize GDT
-        // disable_interrupts();
-        // gdt::init_gdt();
-        // enable_interrupts();
+        let ret = init_gdt();
+        if ret != 0 {
+            vga.write_str_with_colors("Failed to load GDT ! error: ", &Colors::Red, &Colors::Black);
+            vga.write_usize(ret as usize);
+            infinite_loop!();
+        }
+
+        // Initialize IDT
+        //enable_interrupts();
 
         // Handle multiboot data
         // vga.write_str("Multiboot found ! magic: ");
@@ -107,10 +116,6 @@ impl Kernel {
         // vga.write_str(":");
         // vga.write_u8(time.second);
         // vga.write('\n');
-
-        // GDT
-        // IDT
-        // Paging
 
         vga.write_str(include_str!("./header_42"));
         vga.write('\n');

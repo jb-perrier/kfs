@@ -30,4 +30,6 @@ extern "C" {
     pub fn halt();
     pub fn load_gdt(gdt: *const GdtDescriptor);
     pub fn check_gdt() -> u32;
+    pub fn enable_paging();
+    pub fn set_page_directory(page_directory: *const u32);
 }

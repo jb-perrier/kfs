@@ -5,6 +5,7 @@ pub mod cmos;
 pub mod gdt;
 pub mod libc;
 pub mod multiboot;
+pub mod paging;
 pub mod shell;
 pub mod time;
 pub mod vga;
@@ -15,6 +16,7 @@ use self::{cmos::Cmos, multiboot::Multiboot, time::Time};
 use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
 use core::{mem::size_of, panic::PanicInfo};
 use gdt::init_gdt;
+use paging::init_paging;
 use vga::*;
 
 pub static mut INSTANCE: Kernel = Kernel { time: Time::new() };
@@ -55,12 +57,13 @@ impl Kernel {
         }
 
         // Initialize GDT
-        let ret = init_gdt();
-        if ret != 0 {
-            vga.write_str_with_colors("Failed to load GDT ! error: ", &Colors::Red, &Colors::Black);
-            vga.write_usize(ret as usize);
+        if init_gdt() != 0 {
+            vga.write_str_with_colors("Failed to load GDT !", &Colors::Red, &Colors::Black);
             infinite_loop!();
         }
+
+        // Init Paging
+        init_paging();
 
         // Initialize IDT
         //enable_interrupts();

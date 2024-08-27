@@ -42,10 +42,4 @@ _start:
 	push ebx
 	push eax
 	call kmain
- 
-	; infinite loop, since kmain returned while it should not
-	cli
-.hang:
-	hlt
-	jmp .hang
 .end:

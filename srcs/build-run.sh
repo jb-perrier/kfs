@@ -1,2 +1,2 @@
-bash ./build.sh
-bash ./run.sh
+sh ./build.sh
+sh ./run.sh

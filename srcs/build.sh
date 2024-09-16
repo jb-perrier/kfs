@@ -9,4 +9,4 @@ else
     docker container start kfs-builder
 fi
 docker exec -t "kfs-builder" bash -c 'export PATH=/root/.cargo/bin:$PATH & make -f /home/kfs/Makefile'
-docker container stop kfs-builder
+docker container stop kfs-builder &

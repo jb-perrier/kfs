@@ -8,3 +8,7 @@ foreach ($folder in $foldersToRemove) {
         Write-Host "Folder not found: $folder"
     }
 }
+
+docker container rm kfs-builder -f
+docker container prune -f
+docker image prune -f

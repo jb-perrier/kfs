@@ -2,6 +2,7 @@
     "rust-analyzer.cargo.target": "i586-pc-windows-msvc",
     "rust-analyzer.check.allTargets": false,
     "rust-analyzer.linkedProjects": [
-        "./srcs/kernel/"
-    ]
+        "./srcs/kernel/Cargo.toml"
+    ],
+    "rust-analyzer.cargo.sysroot": "/home/jperrier/.rustup/toolchains/stable-x86_64-unknown-linux-gnu"
 }

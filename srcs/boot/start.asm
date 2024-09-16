@@ -26,6 +26,22 @@ resb KERNEL_STACK_SIZE
 stack_top:
  
 section .text
+
+global get_stack_top
+get_stack_top:
+	mov eax, stack_top
+	ret
+
+global get_stack_bottom
+get_stack_bottom:
+	mov eax, stack_bottom
+	ret
+
+global get_stack_ptr
+get_stack_ptr:
+	mov eax, esp
+	ret
+
 global _start:function (_start.end - _start)
 _start:
 	; we are in 32 bits protected mode
@@ -49,3 +65,4 @@ _start:
 	hlt
 	jmp .hang
 .end:
+

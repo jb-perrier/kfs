@@ -84,13 +84,22 @@ pub fn init_gdt() -> u32 {
     }
 }
 
-const fn build_access(descriptor_type: u16, present: u16, system_available: u16, long_mode: u16, size: u16, granularity: u16, privilege: u16, access: u8)-> u8 {
-    ((descriptor_type << 0x04) |
-    (present << 0x07) |
-    (system_available << 0x0C) |
-    (long_mode << 0x0D) |
-    (size << 0x0E) |
-    (granularity << 0x0F) |
-    ((privilege & 0x03) << 0x05) |
-    access as u16) as u8
+const fn build_access(
+    descriptor_type: u16,
+    present: u16,
+    system_available: u16,
+    long_mode: u16,
+    size: u16,
+    granularity: u16,
+    privilege: u16,
+    access: u8,
+) -> u8 {
+    ((descriptor_type << 0x04)
+        | (present << 0x07)
+        | (system_available << 0x0C)
+        | (long_mode << 0x0D)
+        | (size << 0x0E)
+        | (granularity << 0x0F)
+        | ((privilege & 0x03) << 0x05)
+        | access as u16) as u8
 }

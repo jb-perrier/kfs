@@ -34,7 +34,7 @@ pub struct Vga {
 }
 
 impl Vga {
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self { index: 0 }
     }
 

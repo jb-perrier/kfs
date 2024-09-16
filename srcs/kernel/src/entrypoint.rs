@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![allow(unused)]
+#![feature(strict_provenance)]
 
 mod kernel;
 

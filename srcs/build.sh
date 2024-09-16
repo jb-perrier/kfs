@@ -1,4 +1,4 @@
-./tools/install-linux-target.sh
+sh ./tools/install-linux-target.sh
 
 docker build ./tools -t kfs-builder
 OUTPUT=$(docker ps -a -q -f "name=kfs-builder")

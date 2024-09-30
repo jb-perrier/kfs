@@ -15,7 +15,7 @@ before:
 
 link: boot kernel
 	@echo "$(_CYAN)Linking Boot + Kernel ...$(_END)"
-	@ld -m elf_i386 -T /home/kfs/tools/link.ld -o /home/kfs/build/kfs.bin $(BOOT_OBJS) /home/kfs/build/libkernel.a 
+	@ld -m elf_i386 -static --entry=_start -T /home/kfs/tools/link.ld -o /home/kfs/build/kfs.bin $(BOOT_OBJS) /home/kfs/build/libkernel.a 
 	@echo "$(_BOLD)$(_GREEN)Done$(_END)"
 
 kernel:

@@ -1,9 +1,7 @@
 extern kmain
 
-extern kernel_virtual_start
-extern kernel_virtual_end
-extern kernel_physical_start
-extern kernel_physical_end
+extern _KERNEL_START
+extern _KERNEL_END
 
 MBALIGN  equ  1 << 0
 MEMINFO  equ  1 << 1

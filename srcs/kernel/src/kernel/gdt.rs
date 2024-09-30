@@ -1,3 +1,5 @@
+#![allow(clippy::too_many_arguments)]
+
 use core::ptr::addr_of;
 
 use super::asm;
@@ -43,6 +45,57 @@ static mut GDT: [GdtEntry; GDT_SIZE] = [
     GdtEntry::new(0, 0xFFFFF, USER_DATA_SEGMENT, 0xCF),
     GdtEntry::new(0, 0xFFFFF, USER_STACK_SEGMENT, 0xCF),
 ];
+
+// LINK : Previous Task Link
+// ESP : Stack Pointers used to load the stack when a privilege level change occurs from a lower privilege level to a higher one.
+// SS : Stack Segment Selector used to load the stack when a privilege level change occurs from a lower privilege level to a higher one.
+// CR3 : Page Directory Base Address
+// EIP : Instruction Pointer
+// EFLAGS : Flags Register
+// IOPB : I/O Permission Bit Map Base Address
+// SSP : Shadow Stack pointer
+#[repr(C, packed)]
+pub struct Tss {
+    link: u16,
+    _link_reserved: u16,
+    esp0: u32,
+    ss0: u16, 
+    _ss0_reserved: u16,
+    esp1: u32,
+    ss1: u16,
+    _ss1_reserved: u16,
+    esp2: u32,
+    ss2: u16,
+    _ss2_reserved: u16,
+    cr3: u32,
+    eip: u32,
+    eflags: u32,
+    eax: u32,
+    ecx: u32,
+    edx: u32,
+    ebx: u32,
+    esp: u32,
+    ebp: u32,
+    esi: u32,
+    edi: u32,
+    es: u16,
+    _es_reserved: u16,
+    cs: u16,
+    _cs_reserved: u16,
+    ss: u16,
+    _ss_reserved: u16,
+    ds: u16,
+    _ds_reserved: u16,
+    fs: u16,
+    _fs_reserved: u16,
+    gs: u16,
+    _gs_reserved: u16,
+    ldt: u16,
+    _ldt_reserved: u16,
+    _iopb_reserved: u16,
+    iomap_base: u16,
+    ssp: u32,
+}
 
 #[repr(C, packed)]
 pub struct GdtEntry {

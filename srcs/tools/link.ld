@@ -1,17 +1,25 @@
 OUTPUT_FORMAT(elf32-i386)
 ENTRY(_start)
+
+_KERNEL_BASE = 0x4000000;
 SECTIONS
 {
     . = 1M;
-    kernel_virtual_start = .;
-    kernel_physical_start = . - 1M;
+
+    .boot : {
+		*(.multiboot_header) /* ensure that the multiboot header is at the beginning */
+		*(.boottext)
+	}
+
+    . = _KERNEL_BASE;
+    _KERNEL_START = .;
     .text ALIGN(4K):
     {
         code = .;
         *(.multiboot)
         *(.text)
     }
-    .rodata  ALIGN(4K):
+    .rodata ALIGN(4K):
     {
         *(.rodata)
     }
@@ -25,6 +33,5 @@ SECTIONS
         bss = .;
         *(.bss)
     }
-    kernel_virtual_end = .;
-    kernel_physical_end = . - 1M;
+    _KERNEL_END = .;
 }

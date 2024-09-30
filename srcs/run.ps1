@@ -1,1 +1,1 @@
-qemu-system-i386 -s -cdrom ./bin/kfs.iso
+qemu-system-i386 -s -m 128M -cdrom ./bin/kfs.iso

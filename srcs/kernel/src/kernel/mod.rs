@@ -19,7 +19,7 @@ use core::{mem::size_of, panic::PanicInfo};
 use gdt::init_gdt;
 use paging::init_paging;
 use vga::*;
-use dump::dump;
+use dump::{dump, print_as_hex};
 
 pub static mut KERN: Kernel = Kernel {
     time: Time::new(),
@@ -72,6 +72,11 @@ impl Kernel {
             infinite_loop!();
         }
 
+        self.write_str("KERNEL_START: ");
+        let addr = &asm::_KERNEL_START as *const _ as usize;
+        print_as_hex(addr, 8);
+        self.write_str("\n");
+        // Check GDT
         // self.vga.write_str_with_colors(
         //     include_str!("./header_top"),
         //     &Colors::Green,
@@ -86,9 +91,13 @@ impl Kernel {
         let stack_top = asm::get_stack_top() as *const u8;
         dump(stack_ptr, stack_top);
 
+        self.write_str("\n");
+        const STR_BUFFER: &str = "Dump GDT: hello this is a very nice text indeed!\n";
+        dump(STR_BUFFER.as_ptr(), STR_BUFFER.as_ptr().add(STR_BUFFER.len()));
         let index = self.vga.get_index();
         self.vga.set_cursor_pos(index);
 
+        
         infinite_loop!();
     }
 

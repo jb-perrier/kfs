@@ -1,4 +1,4 @@
-use core::arch::asm;
+use core::{arch::asm, ffi::c_void};
 
 use super::gdt::GdtDescriptor;
 
@@ -24,6 +24,8 @@ pub unsafe fn nop(count: usize) {
 }
 
 extern "C" {
+    pub static _KERNEL_START: *const c_void;
+    pub static _KERNEL_END: *const c_void;
     pub fn shutdown();
     pub fn disable_interrupts();
     pub fn enable_interrupts();

@@ -29,7 +29,7 @@ const USER_CODE_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_CODE_EXR
 const USER_DATA_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_DATA_RDWR);
 const USER_STACK_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_DATA_RDWREXPD);
 
-static mut GDT_DESCRIPTOR_PTR: *mut GdtDescriptor = unsafe { 0x00000800 as *mut GdtDescriptor };
+pub static mut GDT_DESCRIPTOR_PTR: *mut GdtDescriptor = unsafe { 0x00000800 as *mut GdtDescriptor };
 
 const GDT_SIZE: usize = 7;
 

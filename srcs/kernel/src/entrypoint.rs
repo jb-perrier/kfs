@@ -1,6 +1,7 @@
 #![no_std]
 #![no_main]
 #![allow(unused)]
+#![allow(static_mut_refs)]
 #![feature(strict_provenance)]
 
 mod kernel;
@@ -10,6 +11,5 @@ mod kernel;
 pub unsafe extern "C" fn kmain(magic: u32, multiboot: *const kernel::multiboot::Multiboot) -> ! {
     kernel::KERN.start(&*multiboot, magic);
 
-    #[allow(clippy::empty_loop)]
-    loop {}
+    kernel::infinite_loop!();
 }

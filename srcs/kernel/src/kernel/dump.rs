@@ -3,12 +3,6 @@ use super::KERN;
 static mut STR_BUF: [u8; 4] = [0; 4];
 
 pub unsafe fn dump(mut base: *const u8, limit: *const u8) {
-    // KERN.write_str("dump: ");
-    // KERN.write_usize(base as usize);
-    // KERN.write_str(" => ");
-    // KERN.write_usize(limit as usize);
-    // KERN.write_str("\n");
-
     let mut ptr = base;
     let mut line_ptr = base;
     while ptr.addr() < limit.addr() || (ptr.addr() - base.addr()) % 8 != 0 {

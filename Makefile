@@ -12,7 +12,4 @@ run:
 clean:
 	cd srcs;sh clean.sh
 
-fclean: clean
-	docker container prune -f
-
 re: fclean all

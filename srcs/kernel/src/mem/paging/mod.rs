@@ -5,12 +5,14 @@ use table::{PageTable, PageTableEntry};
 
 use crate::asm;
 
+use super::next_aligned_from_addr;
+
 pub mod directory;
 pub mod table;
 
 static mut PAGE_DIRECTORY: PageDirectory = PageDirectory::new();
 
-const PAGE_SIZE: u32 = 4096;
+pub const PAGE_SIZE: u32 = 4096;
 
 pub fn init(memory_block: (u32, u32)) -> Result<(), ()> {
     let start = memory_block.0;
@@ -23,12 +25,10 @@ pub fn init(memory_block: (u32, u32)) -> Result<(), ()> {
                 .build();
         }
 
-        let kernel_end_aligned = next_aligned_from_addr(asm::_KERNEL_END as u32, PAGE_SIZE);
-
         // Add few pages de kernel directory
         for i in 0..10 {
             let mut table = &mut PAGE_DIRECTORY.tables[i];
-            let page_addr = kernel_end_aligned + i as u32 * PAGE_SIZE;
+            let page_addr = start + i as u32 * PAGE_SIZE;
             
             table.set_address(page_addr);
             table.set_present(true);
@@ -41,15 +41,6 @@ pub fn init(memory_block: (u32, u32)) -> Result<(), ()> {
         asm::enable_paging();
     }
     Ok(())
-}
-
-// get next aligned address starting from addr
-pub fn next_aligned_from_addr(addr: u32, align: u32) -> u32 {
-    if addr % align == 0 {
-        addr
-    } else {
-        (addr / PAGE_SIZE + 1) * PAGE_SIZE
-    }
 }
 
 // based on the address, get the page that the address is in

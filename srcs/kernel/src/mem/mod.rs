@@ -1,8 +1,9 @@
 use core::alloc::Layout;
 
 use multiboot::information::{MemoryType, Multiboot};
+use paging::PAGE_SIZE;
 
-use crate::{infinite_loop, vga};
+use crate::{asm, infinite_loop, vga};
 
 pub mod paging;
 
@@ -27,14 +28,23 @@ pub fn init(boot_info: &Multiboot) -> Result<(), MemoryError> {
         return Err(MemoryError::NoMemoryMap);
     }
 
-    let Some(region) = choose_region(boot_info) else {
+    let Some(mut region) = choose_region(boot_info) else {
         return Err(MemoryError::NoSuitableMemoryRegionFound);
     };
 
-    if paging::init(region).is_err() {
-        return Err(MemoryError::Unknown);
-    }
+    print_regions(boot_info);
+
+    // skip kernel program
+    // and align region so we can use it for paging
+    let kernel_end = unsafe { asm::_KERNEL_END as u32 };
+    let kernel_end_aligned = next_aligned_from_addr(kernel_end, PAGE_SIZE);
+    region.0 = kernel_end_aligned;
+    region.1 = next_aligned_from_addr(region.1, PAGE_SIZE);
     
+    // if paging::init(region).is_err() {
+    //     return Err(MemoryError::Unknown);
+    // }
+
     Ok(())
 }
 
@@ -88,5 +98,23 @@ pub fn print_regions(boot_info: &Multiboot) {
         vga::write_str(" (");
         vga::write_num!(length);
         vga::write_str(" bytes)\n");
+    }
+}
+
+// get next aligned address starting from addr
+pub fn next_aligned_from_addr(addr: u32, align: u32) -> u32 {
+    if addr % align == 0 {
+        addr
+    } else {
+        (addr / align + 1) * align
+    }
+}
+
+// get previous aligned address starting from addr
+pub fn previous_aligned_from_addr(addr: u32, align: u32) -> u32 {
+    if addr % align == 0 {
+        addr
+    } else {
+        (addr / align) * align
     }
 }

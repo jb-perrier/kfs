@@ -48,16 +48,12 @@ _start:
 	; x82 stack grow downwards, so we need to start from the top
 	mov esp, stack_top
  
-	; TODO: use multiboot_info struct in register EBX to get a nice memory map and pass it to kernel allocator
-	; TODO: Enabling floating point instructions, instructions set
-	; TODO: load GDT; zill be done in rust kernel
     ; ABI requires the stack to be aligned on 16 bytes on the call
 
 	push ebx
 	push eax
 	call kmain
  
-	; infinite loop, since kmain returned while it should not
 	cli
 .hang:
 	hlt

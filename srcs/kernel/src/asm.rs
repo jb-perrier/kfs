@@ -26,15 +26,33 @@ pub unsafe fn nop(count: usize) {
 extern "C" {
     pub static _KERNEL_START: *const c_void;
     pub static _KERNEL_END: *const c_void;
+    pub static _KERNEL_STACK_TOP: *const c_void;
+    pub static _KERNEL_STACK_BOTTOM: *const c_void;
     pub fn shutdown();
-    pub fn disable_interrupts();
-    pub fn enable_interrupts();
+    pub fn _disable_interrupts();
+    pub fn _enable_interrupts();
     pub fn halt();
-    pub fn load_gdt(gdt: *const GdtDescriptor);
-    pub fn check_gdt() -> u32;
+    pub fn _load_gdt(gdt: *const GdtDescriptor);
+    pub fn _check_gdt() -> u32;
     pub fn enable_paging();
     pub fn set_page_directory(page_directory: *const u32);
     pub fn get_stack_top() -> *const u32;
     pub fn get_stack_bottom() -> *const u32;
     pub fn get_stack_ptr() -> *const u32;
+}
+
+pub fn disable_interrupts() {
+    unsafe { _disable_interrupts(); }
+}
+
+pub fn enable_interrupts() {
+    unsafe { _enable_interrupts(); }
+}
+
+pub unsafe fn load_gdt(gdt: *const GdtDescriptor) {
+    _load_gdt(gdt);
+}
+
+pub fn check_gdt() -> u32 {
+    unsafe { _check_gdt() }
 }

@@ -1,10 +1,15 @@
-Qemu ram: 128 MB
+Qemu ram: 256 MB
 Higher half kernel constrained to ram
 Physical:
+2MB Reserved for BIOS/UEFI
+_KERNEL_START
+_KERNEL_END
+Align 4K
+Pages until end of ram
 
 Virtual:
-[0x400 0000 – 0x700 0000] 33.554.432 bytes : Kernel space
-[0x000 0000 – 0x3FF FFFF] 67.108.863 bytes : User space
+[0x00000000 – 0xBFFFFFFF] 3GB : User space
+[0xC0000000 – 0xFFFFFFFF] 1GB : Kernel space
 
 Not working:
 - Be aware of big variables on the stack crash the kernel sometimes, prefer const / static outside of function.

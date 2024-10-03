@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [lib]
-path = "./src/entrypoint.rs"
+path = "./src/lib.rs"
 crate-type = ["staticlib"]
 
 [profile.dev]
@@ -15,3 +15,6 @@ panic = "abort"
 
 [build]
 target = "i386-unknown-none"
+
+[dependencies]
+multiboot = "0.8.0"

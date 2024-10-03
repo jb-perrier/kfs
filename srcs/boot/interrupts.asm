@@ -1,12 +1,12 @@
 
-global disable_interrupts
+global _disable_interrupts
 
-disable_interrupts:
+_disable_interrupts:
     cli
     ret
 
-global enable_interrupts
+global _enable_interrupts
 
-enable_interrupts:
+_enable_interrupts:
     sti
     ret

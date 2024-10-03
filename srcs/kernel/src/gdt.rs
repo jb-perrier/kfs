@@ -126,15 +126,18 @@ impl GdtEntry {
     }
 }
 
-pub fn init_gdt() -> u32 {
+pub fn init() -> Result<(), ()> {
     unsafe {
         *GDT_DESCRIPTOR_PTR = GdtDescriptor {
             size: (core::mem::size_of::<[GdtEntry; GDT_SIZE]>() - 1) as u16,
             offset: addr_of!(GDT) as *const _ as u64,
         };
         asm::load_gdt(GDT_DESCRIPTOR_PTR);
-        asm::check_gdt()
     }
+    if asm::check_gdt() != 0 {
+        return Err(());
+    }
+    Ok(())
 }
 
 const fn build_access(

@@ -1,17 +1,10 @@
 OUTPUT_FORMAT(elf32-i386)
 ENTRY(_start)
 
-_KERNEL_BASE = 0x4000000;
 SECTIONS
 {
-    . = 1M;
+    . = 2M;
 
-    .boot : {
-		*(.multiboot_header) /* ensure that the multiboot header is at the beginning */
-		*(.boottext)
-	}
-
-    . = _KERNEL_BASE;
     _KERNEL_START = .;
     .text ALIGN(4K):
     {

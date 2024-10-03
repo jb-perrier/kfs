@@ -1,3 +1,5 @@
+use super::bits::get_bit_at;
+
 #[repr(C)]
 pub struct Multiboot {
     pub flags: u32,
@@ -32,6 +34,12 @@ pub struct Multiboot {
     pub framebuffer_height: u32,
     pub framebuffer_bpp: u8,
     pub framebuffer_type: u8,
+}
+
+impl Multiboot {
+    pub fn has_memory_map(&self) -> bool {
+        get_bit_at(self.flags, 5)
+    }
 }
 
 #[repr(C)]

@@ -1,7 +1,7 @@
-global load_gdt
-global check_gdt
+global _load_gdt
+global _check_gdt
 
-load_gdt:
+_load_gdt:
     mov eax, [esp+4]
     lgdt [eax]
     mov ax, 0x10
@@ -15,7 +15,7 @@ load_gdt:
 .reload_cs:
     ret
 
-check_gdt:
+_check_gdt:
     ; code segment register
     mov ax, cs
     cmp ax, 0x08

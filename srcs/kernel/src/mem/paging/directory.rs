@@ -3,12 +3,14 @@ use crate::bits::{get_bit_at, set_bit_at};
 #[repr(C, align(4096))]
 #[derive(Clone, Copy)]
 pub struct PageDirectory {
-    pub tables: [PageDirectoryEntry; 1024]
+    pub tables: [PageDirectoryEntry; 1024],
 }
 
 impl PageDirectory {
     pub const fn new() -> Self {
-        PageDirectory { tables: [PageDirectoryEntry(0); 1024] }
+        PageDirectory {
+            tables: [PageDirectoryEntry(0); 1024],
+        }
     }
 }
 
@@ -28,17 +30,16 @@ pub enum PageSizeUnit {
 pub struct PageDirectoryEntry(pub u32);
 
 impl PageDirectoryEntry {
-
     pub fn flags(&self) -> u32 {
         self.0 & 0xFFF
     }
 
     pub fn address(&self) -> u32 {
-        (self.0 & 0xFFFFF000) >> 12
+        self.0 & 0xFFFFF000
     }
 
     pub fn set_address(&mut self, address: u32) {
-        let shifted_address = address << 12;
+        let shifted_address = address & 0xFFFFF000;
         let flags = self.flags();
         self.0 = shifted_address | flags;
     }
@@ -78,17 +79,22 @@ impl PageDirectoryEntry {
 
 impl Default for PageDirectoryEntry {
     fn default() -> Self {
-        PageDirectoryEntryBuilder::new().read_write(true).user(false).build()
+        PageDirectoryEntryBuilder::new()
+            .read_write(true)
+            .user(false)
+            .build()
     }
 }
 
 pub struct PageDirectoryEntryBuilder {
-    entry: PageDirectoryEntry
+    entry: PageDirectoryEntry,
 }
 
 impl PageDirectoryEntryBuilder {
     pub fn new() -> Self {
-        PageDirectoryEntryBuilder { entry: PageDirectoryEntry(0) }
+        PageDirectoryEntryBuilder {
+            entry: PageDirectoryEntry(0),
+        }
     }
 
     pub fn present(mut self, present: bool) -> Self {

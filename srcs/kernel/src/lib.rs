@@ -75,5 +75,8 @@ pub fn start(multiboot: u32, magic: u32) {
     let index = vga::get_index();
     vga::set_cursor_pos(index);*/
 
+    vga::write_str("We are using pagination !!\n");
+    let num = 55652 + 522;
+    vga::write_num!(num);
     infinite_loop!();
 }

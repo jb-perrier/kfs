@@ -1,9 +1,9 @@
-use core::ptr::addr_of;
+use core::{ffi::c_void, mem::size_of, ptr::addr_of};
 
 use directory::{PageDirectory, PageDirectoryEntryBuilder};
-use table::{PageTable, PageTableEntry};
+use table::{PageTable, PageTableEntry, PageTableEntryBuilder};
 
-use crate::asm;
+use crate::{asm, vga};
 
 use super::next_aligned_from_addr;
 
@@ -18,26 +18,46 @@ pub fn init(memory_block: (u32, u32)) -> Result<(), ()> {
     let start = memory_block.0;
     let end = memory_block.1;
     unsafe {
+        let table_size = size_of::<PageTable>() as u32;
+        // Manually allocate enough space for the whole kernel directory + tables
         for i in 0..1024 {
-            let mut table = &mut PAGE_DIRECTORY.tables[i];
-            *table = PageDirectoryEntryBuilder::new()
-                .unallocated()
+            let mut table = (start + i * table_size) as *mut PageTable;
+            let mut table = &mut *table;
+
+            // vga::write_num_hex!(start + i * table_size);
+            // vga::write_num_hex!(i * 1024 * 4096);
+            // vga::write_str("\n");
+            let base_addr = i * 1024 * 4096;
+            for j in 0..1024 {
+                let block_addr = base_addr + j * 4096;
+                
+                // vga::write_num_hex!(base_addr + j * 4096);
+                // vga::write_str(" - ");
+
+                let mut entry = &mut table.entries[j as usize];
+                *entry = PageTableEntryBuilder::new()
+                    .present(true)
+                    .read_write(true)
+                    .user(false)
+                    .address(block_addr)
+                    .build();
+
+                // vga::write_num_hex!((*entry).address());
+                // vga::write_str("\n");
+            }
+
+            let mut dir_entry = &mut PAGE_DIRECTORY.tables[i as usize];
+            *dir_entry = PageDirectoryEntryBuilder::new()
+                .present(true)
+                .read_write(true)
+                .user(false)
+                .address(table as *const _ as u32)
                 .build();
         }
 
-        // Add few pages de kernel directory
-        for i in 0..10 {
-            let mut table = &mut PAGE_DIRECTORY.tables[i];
-            let page_addr = start + i as u32 * PAGE_SIZE;
-            
-            table.set_address(page_addr);
-            table.set_present(true);
-            table.set_read_write(true);
-        }
-
         // TODO: keep track of allocated pages
-        
-        asm::set_page_directory(addr_of!(PAGE_DIRECTORY) as *const _ as *const u32);
+
+        asm::set_page_directory(addr_of!(PAGE_DIRECTORY) as *const _ as *const c_void);
         asm::enable_paging();
     }
     Ok(())

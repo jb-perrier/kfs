@@ -35,7 +35,7 @@ extern "C" {
     pub fn _load_gdt(gdt: *const GdtDescriptor);
     pub fn _check_gdt() -> u32;
     pub fn enable_paging();
-    pub fn set_page_directory(page_directory: *const u32);
+    pub fn set_page_directory(page_directory: *const c_void);
     pub fn get_stack_top() -> *const u32;
     pub fn get_stack_bottom() -> *const u32;
     pub fn get_stack_ptr() -> *const u32;

@@ -1,4 +1,4 @@
-use core::alloc::Layout;
+use core::{alloc::Layout, ptr::addr_of};
 
 use multiboot::information::{MemoryType, Multiboot};
 use paging::PAGE_SIZE;
@@ -7,7 +7,7 @@ use crate::{asm, infinite_loop, vga};
 
 pub mod paging;
 
-// pub unsafe fn alloc(layout: Layout) -> *mut u8 {
+// pub unsafe fn kalloc(layout: Layout) -> *mut u8 {
     
 // }
 
@@ -32,18 +32,36 @@ pub fn init(boot_info: &Multiboot) -> Result<(), MemoryError> {
         return Err(MemoryError::NoSuitableMemoryRegionFound);
     };
 
-    print_regions(boot_info);
+    region.0 = next_aligned_from_addr(region.0, PAGE_SIZE);
 
-    // skip kernel program
-    // and align region so we can use it for paging
-    let kernel_end = unsafe { asm::_KERNEL_END as u32 };
-    let kernel_end_aligned = next_aligned_from_addr(kernel_end, PAGE_SIZE);
-    region.0 = kernel_end_aligned;
-    region.1 = next_aligned_from_addr(region.1, PAGE_SIZE);
+    vga::write_str("Kernel start: ");
+    unsafe {
+        let addr = addr_of!(asm::_KERNEL_START) as u32;
+        vga::write_num_hex!(addr);
+    };
+    vga::write_str("\n");
+
+    vga::write_str("Kernel end: ");
+    unsafe {
+        let addr = addr_of!(asm::_KERNEL_END) as u32;
+        vga::write_num_hex!(addr);
+    };
+    vga::write_str("\n");
+
+    let kernel_end = unsafe { addr_of!(asm::_KERNEL_END) as u32 };
+    region.0 = next_aligned_from_addr(kernel_end * 4, PAGE_SIZE);
+
+    // print_regions(boot_info);
     
-    // if paging::init(region).is_err() {
-    //     return Err(MemoryError::Unknown);
-    // }
+    vga::write_str("Region for pages allocation: ");
+    vga::write_num_hex!(region.0);
+    vga::write_str(" - ");
+    vga::write_num_hex!(region.1);
+    vga::write_str("\n");
+
+    if paging::init(region).is_err() {
+        return Err(MemoryError::Unknown);
+    }
 
     Ok(())
 }
@@ -117,4 +135,8 @@ pub fn previous_aligned_from_addr(addr: u32, align: u32) -> u32 {
     } else {
         (addr / align) * align
     }
+}
+
+fn build_virtual(physical: u32, directory_index: u32, table_index: u32, offset: u32) -> u32 {
+    (directory_index << 22) | (table_index << 12) | offset
 }

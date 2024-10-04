@@ -25,6 +25,21 @@ impl Default for PageTable {
 pub struct PageTableEntry(pub u32);
 
 impl PageTableEntry {
+
+    pub fn flags(&self) -> u32 {
+        self.0 & 0xFFF
+    }
+
+    pub fn address(&self) -> u32 {
+        self.0 & 0xFFFFF000
+    }
+
+    pub fn set_address(&mut self, address: u32) {
+        let masked_address = address & 0xFFFFF000;
+        let flags = self.flags();
+        self.0 = masked_address | flags;
+    }
+
     pub fn present(&self) -> bool {
         get_bit_at(self.0, 0)
     }
@@ -57,6 +72,15 @@ pub struct PageTableEntryBuilder {
 impl PageTableEntryBuilder {
     pub fn new() -> Self {
         PageTableEntryBuilder { entry: PageTableEntry(0) }
+    }
+
+    pub fn unallocated(mut self) -> Self {
+        self.address(0).present(false).read_write(false).user(false)
+    }
+
+    pub fn address(mut self, address: u32) -> Self {
+        self.entry.set_address(address);
+        self
     }
 
     pub fn present(mut self, present: bool) -> Self {

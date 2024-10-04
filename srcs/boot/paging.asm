@@ -11,3 +11,4 @@ enable_paging:
     or eax, 0x80000000 ; PG bit
     mov cr0, eax
     ret
+

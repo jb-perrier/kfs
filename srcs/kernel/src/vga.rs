@@ -6,7 +6,7 @@ const VGA_COLUMNS: u32 = 80;
 const VGA_MAX: u32 = VGA_ROWS * VGA_COLUMNS;
 const VGA_BUFFER: u32 = VGA_MAX * 2;
 
-static mut INDEX: isize = 0;
+static mut INDEX: u32 = 0;
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
@@ -37,11 +37,11 @@ pub fn init() {
 
 pub fn clear() {
     unsafe {
-        let mut i: isize = 0;
-        while i < VGA_BUFFER as isize {
-            let cha = VGA_ADDR.offset(i).cast_mut();
+        let mut i = 0;
+        while i < VGA_BUFFER  {
+            let cha = VGA_ADDR.offset(i as isize).cast_mut();
             *cha = b' ';
-            let col = VGA_ADDR.offset(i + 1).cast_mut();
+            let col = VGA_ADDR.offset((i + 1) as isize).cast_mut();
             *col = Colors::White as u8;
             i += 2;
         }
@@ -67,21 +67,25 @@ pub fn set_cursor_pos(pos: isize) {
 #[inline]
 pub fn write_with_colors(c: char, fore_color: &Colors, back_color: &Colors) {
     unsafe {
+        if INDEX >= VGA_COLUMNS * VGA_ROWS {
+            clear();
+            INDEX = 0;
+        }
         match c {
             '\n' => {
-                INDEX += VGA_COLUMNS as isize - (INDEX % VGA_COLUMNS as isize);
+                INDEX += VGA_COLUMNS  - (INDEX % VGA_COLUMNS);
             }
             '\t' => {
                 INDEX += 4;
             }
             '\r' => {
-                INDEX -= INDEX % VGA_COLUMNS as isize;
+                INDEX -= INDEX % VGA_COLUMNS ;
             }
             c => {
                 let rindex = INDEX * 2;
-                let cha = VGA_ADDR.offset(rindex).cast_mut();
+                let cha = VGA_ADDR.offset(rindex as isize).cast_mut();
                 *cha = c as u8;
-                let col = VGA_ADDR.offset(rindex + 1).cast_mut();
+                let col = VGA_ADDR.offset((rindex + 1) as isize).cast_mut();
                 *col = (*back_color as u8) << 5 | *fore_color as u8;
                 INDEX += 1;
             }
@@ -124,5 +128,17 @@ macro_rules! write_num {
     }};
 }
 pub use write_num;
+
+#[macro_export]
+macro_rules! write_num_hex {
+    ($value:expr) => {{
+        if $value == 0 {
+            $crate::vga::write('0');
+        } else {
+            unsafe { $crate::dump::print_as_hex($value as usize, 8) };
+        }
+    }};
+}
+pub use write_num_hex;
 
 use crate::asm;

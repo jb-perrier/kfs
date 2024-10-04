@@ -19,7 +19,7 @@ pub fn init(memory_block: (u32, u32)) -> Result<(), ()> {
     let end = memory_block.1;
     unsafe {
         let table_size = size_of::<PageTable>() as u32;
-        // Manually allocate enough space for the whole kernel directory + tables
+        // Manually allocate enough space for the all kernel tables (they are too big to fit in static memory)
         for i in 0..1024 {
             let mut table = (start + i * table_size) as *mut PageTable;
             let mut table = &mut *table;
@@ -59,6 +59,9 @@ pub fn init(memory_block: (u32, u32)) -> Result<(), ()> {
 
         asm::set_page_directory(addr_of!(PAGE_DIRECTORY) as *const _ as *const c_void);
         asm::enable_paging();
+
+        vga::write_str_with_colors("Pagination initialized !", &vga::Colors::Green, &vga::Colors::Black);
+        vga::write_str_with_colors(" Kernel virtual space mapped as identity\n", &vga::Colors::DarkGray, &vga::Colors::Black);
     }
     Ok(())
 }

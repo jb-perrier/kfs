@@ -32,24 +32,25 @@ pub fn init(boot_info: &Multiboot) -> Result<(), MemoryError> {
         return Err(MemoryError::NoSuitableMemoryRegionFound);
     };
 
-    region.0 = next_aligned_from_addr(region.0, PAGE_SIZE);
+    // vga::write_str("Kernel start: ");
+    // unsafe {
+    //     let addr = addr_of!(asm::_KERNEL_START) as u32;
+    //     vga::write_num_hex!(addr);
+    // };
+    // vga::write_str("\n");
 
-    vga::write_str("Kernel start: ");
-    unsafe {
-        let addr = addr_of!(asm::_KERNEL_START) as u32;
-        vga::write_num_hex!(addr);
-    };
-    vga::write_str("\n");
-
-    vga::write_str("Kernel end: ");
-    unsafe {
-        let addr = addr_of!(asm::_KERNEL_END) as u32;
-        vga::write_num_hex!(addr);
-    };
-    vga::write_str("\n");
+    // vga::write_str("Kernel end: ");
+    // unsafe {
+    //     let addr = addr_of!(asm::_KERNEL_END) as u32;
+    //     vga::write_num_hex!(addr);
+    // };
+    // vga::write_str("\n");
 
     let kernel_end = unsafe { addr_of!(asm::_KERNEL_END) as u32 };
-    region.0 = next_aligned_from_addr(kernel_end * 4, PAGE_SIZE);
+    // let some space between kernel and page tables
+    // for some reasons it crashes if we put the tables right after the kernel
+    // something use memory just after the kernel memory but i don't know why
+    region.0 = next_aligned_from_addr(kernel_end + 10 * PAGE_SIZE, PAGE_SIZE);
 
     // print_regions(boot_info);
     
@@ -58,6 +59,13 @@ pub fn init(boot_info: &Multiboot) -> Result<(), MemoryError> {
     vga::write_str(" - ");
     vga::write_num_hex!(region.1);
     vga::write_str("\n");
+
+    let pages_count = (region.1 - region.0) / PAGE_SIZE;
+    vga::write_str("Memory available for heap (kernel/user): ");
+    vga::write_num!(pages_count);
+    vga::write_str(" pages / ");
+    vga::write_num!(pages_count * PAGE_SIZE);
+    vga::write_str(" bytes\n");
 
     if paging::init(region).is_err() {
         return Err(MemoryError::Unknown);

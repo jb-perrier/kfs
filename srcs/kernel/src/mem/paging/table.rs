@@ -12,6 +12,12 @@ impl PageTable {
     pub const fn new() -> Self {
         PageTable { entries: [PageTableEntry(0); 1024] }
     }
+
+    pub fn clear(&mut self) {
+        for i in 0..1024 {
+            self.entries[i] = PageTableEntry(0);
+        }
+    }
 }
 
 impl Default for PageTable {
@@ -22,19 +28,19 @@ impl Default for PageTable {
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct PageTableEntry(pub u32);
+pub struct PageTableEntry(pub usize);
 
 impl PageTableEntry {
 
-    pub fn flags(&self) -> u32 {
+    pub fn flags(&self) -> usize {
         self.0 & 0xFFF
     }
 
-    pub fn address(&self) -> u32 {
+    pub fn address(&self) -> usize {
         self.0 & 0xFFFFF000
     }
 
-    pub fn set_address(&mut self, address: u32) {
+    pub fn set_address(&mut self, address: usize) {
         let masked_address = address & 0xFFFFF000;
         let flags = self.flags();
         self.0 = masked_address | flags;
@@ -78,7 +84,7 @@ impl PageTableEntryBuilder {
         self.address(0).present(false).read_write(false).user(false)
     }
 
-    pub fn address(mut self, address: u32) -> Self {
+    pub fn address(mut self, address: usize) -> Self {
         self.entry.set_address(address);
         self
     }

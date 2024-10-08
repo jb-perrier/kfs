@@ -45,6 +45,7 @@ pub fn clear() {
             *col = Colors::White as u8;
             i += 2;
         }
+        INDEX = 0;
     }
 }
 

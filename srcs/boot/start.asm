@@ -40,7 +40,7 @@ get_stack_ptr:
 	mov eax, esp
 	ret
 
-global _start:function (_start.end - _start)
+global _start
 _start:
 	; we are in 32 bits protected mode
  

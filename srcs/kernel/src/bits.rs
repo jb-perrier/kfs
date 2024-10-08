@@ -1,6 +1,6 @@
 use core::mem::size_of;
 
-pub fn get_bit_at(input: u32, n: usize) -> bool {
+pub fn get_bit_at(input: usize, n: usize) -> bool {
     if (n < 32) {
         input & (1 << n) != 0
     } else {
@@ -8,7 +8,7 @@ pub fn get_bit_at(input: u32, n: usize) -> bool {
     }
 }
 
-pub fn set_bit_at(input: &mut u32, n: usize, value: bool) {
+pub fn set_bit_at(input: &mut usize, n: usize, value: bool) {
     if (n < 32) {
         if value {
             *input |= 1 << n;

@@ -3,7 +3,7 @@ ENTRY(_start)
 
 SECTIONS
 {
-    . = 1M;
+    . = 2M;
 
     _KERNEL_START = .;
     .text ALIGN(4K):

@@ -1,4 +1,10 @@
-use crate::bits::{get_bit_at, set_bit_at};
+use core::mem::size_of;
+
+use crate::{
+    bits::{get_bit_at, set_bit_at}, error::KernelError, mem::{frame::{Frame, FrameAllocator}, virtual_addr::VirtualAddr}, vga
+};
+
+use super::table::{PageTable, PageTableEntryBuilder};
 
 #[repr(C, align(4096))]
 #[derive(Clone, Copy)]
@@ -7,38 +13,96 @@ pub struct PageDirectory {
 }
 
 impl PageDirectory {
-    pub const fn new() -> Self {
-        PageDirectory {
-            tables: [PageDirectoryEntry(0); 1024],
+    pub fn new(
+        frame_allocator: &mut FrameAllocator,
+        is_user: bool,
+    ) -> Result<*mut PageDirectory, KernelError> {
+        let page_directory_addr = frame_allocator.allocate_zeroed()? as *mut PageDirectory;
+        let page_directory = unsafe { &mut *page_directory_addr };
+        let table_size = size_of::<PageTable>();
+
+        for (i, dir_entry) in &mut page_directory.tables.iter_mut().enumerate() {
+            let table_addr = frame_allocator.allocate_zeroed()? as *mut PageTable;
+            let mut table = unsafe { &mut *table_addr };
+
+            for (j, table_entry) in table.entries.iter_mut().enumerate() {
+                *table_entry = PageTableEntryBuilder::new().build();
+            }
+
+            *dir_entry = PageDirectoryEntryBuilder::new()
+                .present(true)
+                .read_write(true)
+                .user(is_user)
+                .address(table as *const _ as usize)
+                .build();
+        }
+        Ok(page_directory_addr)
+    }
+
+    pub fn identity(&mut self) {
+        let is_user = self.tables[0].user();
+        for (i, dir_entry) in &mut self.tables.iter_mut().enumerate() {
+            let mut table = unsafe { &mut *dir_entry.table() };
+
+            let base_addr = i * 1024 * 4096;
+            for (j, table_entry) in table.entries.iter_mut().enumerate() {
+                let block_addr = base_addr + j * 4096;
+                *table_entry = PageTableEntryBuilder::new()
+                    .address(block_addr)
+                    .present(true)
+                    .read_write(true)
+                    .user(is_user)
+                    .build();
+            }
         }
     }
-}
 
-impl Default for PageDirectory {
-    fn default() -> Self {
-        Self::new()
+    pub fn clear(&mut self) {
+        for i in 0..1024 {
+            self.tables[i] = PageDirectoryEntry(0);
+        }
     }
-}
 
-pub enum PageSizeUnit {
-    Kylobyte,
-    Megabyte,
+    pub fn add_new_page(&mut self, frame: *mut Frame, is_user: bool) -> Result<(), ()> {
+        let frame = frame as usize;
+        let entry = PageDirectoryEntryBuilder::new()
+            .address(frame)
+            .present(true)
+            .read_write(true)
+            .build();
+        for entry in &self.tables {
+            let table = unsafe { &mut *entry.table() };
+            for mut entry in &mut table.entries {
+                if !entry.present() {
+                    *entry = PageTableEntryBuilder::new()
+                        .address(frame)
+                        .present(true)
+                        .read_write(true)
+                        .user(is_user)
+                        .build();
+                    return Ok(());
+                }
+            }
+        }
+        // TODO: Out of memory (not enough space in the page directory)
+        Err(())
+    }
 }
 
 #[repr(C)]
 #[derive(Clone, Copy)]
-pub struct PageDirectoryEntry(pub u32);
+pub struct PageDirectoryEntry(pub usize);
 
 impl PageDirectoryEntry {
-    pub fn flags(&self) -> u32 {
+    pub fn flags(&self) -> usize {
         self.0 & 0xFFF
     }
 
-    pub fn address(&self) -> u32 {
+    pub fn address(&self) -> usize {
         self.0 & 0xFFFFF000
     }
 
-    pub fn set_address(&mut self, address: u32) {
+    pub fn set_address(&mut self, address: usize) {
         let shifted_address = address & 0xFFFFF000;
         let flags = self.flags();
         self.0 = shifted_address | flags;
@@ -68,12 +132,8 @@ impl PageDirectoryEntry {
         set_bit_at(&mut self.0, 2, true);
     }
 
-    pub fn size(&self) -> PageSizeUnit {
-        if get_bit_at(self.0, 7) {
-            PageSizeUnit::Megabyte
-        } else {
-            PageSizeUnit::Kylobyte
-        }
+    pub fn table(&self) -> *mut PageTable {
+        (self.0 & 0xFFFFF000) as *mut PageTable
     }
 }
 
@@ -112,7 +172,7 @@ impl PageDirectoryEntryBuilder {
         self
     }
 
-    pub fn address(mut self, address: u32) -> Self {
+    pub fn address(mut self, address: usize) -> Self {
         self.entry.set_address(address);
         self
     }

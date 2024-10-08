@@ -1,4 +1,6 @@
-use core::{arch::asm, ffi::c_void};
+use core::{arch::asm, ffi::c_void, ptr::addr_of};
+
+use crate::mem::paging::directory::PageDirectory;
 
 use super::gdt::GdtDescriptor;
 
@@ -24,8 +26,8 @@ pub unsafe fn nop(count: usize) {
 }
 
 extern "C" {
-    pub static _KERNEL_START: *const c_void;
-    pub static _KERNEL_END: *const c_void;
+    pub static _KERNEL_START: *const usize;
+    pub static _KERNEL_END: *const usize;
     pub static _KERNEL_STACK_TOP: *const c_void;
     pub static _KERNEL_STACK_BOTTOM: *const c_void;
     pub fn shutdown();
@@ -34,11 +36,27 @@ extern "C" {
     pub fn halt();
     pub fn _load_gdt(gdt: *const GdtDescriptor);
     pub fn _check_gdt() -> u32;
-    pub fn enable_paging();
-    pub fn set_page_directory(page_directory: *const c_void);
+    pub fn _enable_paging();
+    pub fn _set_page_directory(page_directory: *mut PageDirectory);
     pub fn get_stack_top() -> *const u32;
     pub fn get_stack_bottom() -> *const u32;
     pub fn get_stack_ptr() -> *const u32;
+}
+
+pub fn enable_paging() {
+    unsafe { _enable_paging(); }
+}
+
+pub fn set_page_directory(page_directory: *mut PageDirectory) {
+    unsafe { _set_page_directory(page_directory); }
+}
+
+pub fn kernel_start() -> usize {
+    unsafe { addr_of!(_KERNEL_START) as usize }
+}
+
+pub fn kernel_end() -> usize {
+    unsafe { addr_of!(_KERNEL_END) as usize }
 }
 
 pub fn disable_interrupts() {

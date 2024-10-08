@@ -24,12 +24,14 @@ impl MemoryManagement for Mem {
 
 static mut MEM: Mem = Mem;
 
-pub fn init<'a, 'b>(magic: u32, multiboot: u32) -> Option<Multiboot<'a, 'b>> {
+pub fn init<'a, 'b>(magic: usize, multiboot: usize) -> Option<Multiboot<'a, 'b>> {
     if magic != 0x2BADB002 {
         vga::write_str_with_colors("Unknown multiboot ! magic: ", &vga::Colors::Red, &vga::Colors::Black);
-        vga::write_num!(magic as usize);
+        vga::write_num!(magic);
         infinite_loop!();
     }
+
+    let multi = unsafe { Multiboot::from_ptr(multiboot as u64, &mut MEM) };
     
-    unsafe { Multiboot::from_ptr(multiboot as u64, &mut MEM) }
+    multi
 }

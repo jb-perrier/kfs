@@ -18,3 +18,4 @@ target = "i386-unknown-none"
 
 [dependencies]
 multiboot = "0.8.0"
+static_assertions = "1.1.0"

@@ -99,8 +99,8 @@ pub fn start(multiboot: usize, magic: usize) {
     text::write_num_hex!(heap_alloc as usize);
     text::write_str("\n");
 
-    asm::divide_zero();
-    
+    heap.deallocate(heap_alloc, 16);
+
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
     infinite_loop!();
 }

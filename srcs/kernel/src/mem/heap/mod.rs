@@ -66,4 +66,20 @@ impl Heap {
         }
         Err(KernelError::InvalidPointer)
     }
+
+    pub fn is_allocated(&self, ptr: *mut u8) -> bool {
+        let mut current = self.blocks;
+        loop {
+            let block = unsafe { &*current };
+            if block.is_allocated(ptr) {
+                return true;
+            }
+            if let Some(next) = block.next() {
+                current = next;
+            } else {
+                break;
+            }
+        }
+        false
+    }
 }

@@ -27,8 +27,8 @@ impl HeapBlock {
         heap.size = size;
         heap.next = None;
         
-        // heap.clear();
-        // heap.init_bitmap();
+        heap.clear();
+        heap.init_bitmap();
         heap_addr
     }
 
@@ -81,6 +81,16 @@ impl HeapBlock {
         let size_in_bitmap = size_in_bitmap(size);
         self.deallocate_in_bitmap(hole, size)?;
         Ok(())
+    }
+
+    pub fn is_allocated(&self, addr: *mut u8) -> bool {
+        let hole = (addr as usize - self.data_start()) / HEAP_SUB_BLOCK_SIZE;
+        let addr = addr as usize;
+        if addr < self.data_start() || addr >= self.data_end() {
+            return false;
+        }
+        let bitmap_start = self.bitmap_start();
+        unsafe { core::ptr::read((bitmap_start + hole) as *const u8) == 1 }
     }
 
     // bitmap space

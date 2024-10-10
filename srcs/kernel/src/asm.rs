@@ -48,6 +48,11 @@ extern "C" {
     pub fn get_stack_bottom() -> *const u32;
     pub fn get_stack_ptr() -> *const u32;
     pub fn _idt_flush(idt: usize);
+    pub fn _divide_zero();
+}
+
+pub fn divide_zero() {
+    unsafe { _divide_zero(); }
 }
 
 pub fn enable_paging() {

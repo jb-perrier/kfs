@@ -59,7 +59,7 @@ impl HeapBlock {
         for i in self.bitmap_start()..self.data_end() {
             unsafe { core::ptr::write_unaligned(i as *mut u8, 0_u8) };
         }
-        // self.init_bitmap();
+        self.init_bitmap();
     }
 
     pub fn allocate(&mut self, size: usize) -> Result<*mut u8, KernelError> {

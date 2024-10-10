@@ -39,7 +39,6 @@ extern "C" {
 
 #[no_mangle]
 pub extern "C" fn isr_handler(regs: Registers) {
-    text::write_str("ISR received\n");
     unsafe {
         if let Some(handler) = get_interrupt_handler(regs.int_no as usize) {
             handler(regs);

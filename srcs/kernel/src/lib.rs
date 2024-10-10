@@ -68,7 +68,7 @@ pub fn start(multiboot: usize, magic: usize) {
     }
     asm::enable_interrupts();
 
-    let Ok((frame_allocator, page_directory, heap)) = mem::init(&boot_info) else {
+    let Ok((frame_allocator, page_directory, mut heap)) = mem::init(&boot_info) else {
         text::write_str_with_colors("Failed to init memory !", &Colors::Red, &Colors::Black);
         infinite_loop!();
     };
@@ -94,11 +94,13 @@ pub fn start(multiboot: usize, magic: usize) {
     let index = vga::get_index();
     vga::set_cursor_pos(index);*/
     
-    // let heap_alloc = heap.allocate(16).unwrap();
-    // text::write_str("Alloc addr: 0x");
-    // text::write_num_hex!(heap_alloc as usize);
-    // text::write_str("\n");
+    let heap_alloc = heap.allocate(16).unwrap();
+    text::write_str("Alloc addr: 0x");
+    text::write_num_hex!(heap_alloc as usize);
+    text::write_str("\n");
 
+    asm::divide_zero();
+    
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
     infinite_loop!();
 }

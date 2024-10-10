@@ -1,6 +1,6 @@
-use ::multiboot::information::{MemoryManagement, MemoryType, Multiboot, PAddr};
+use multiboot::information::{MemoryManagement, MemoryType, Multiboot, PAddr};
 
-use crate::{infinite_loop, vga};
+use crate::{infinite_loop, text};
 
 struct Mem;
 
@@ -26,8 +26,8 @@ static mut MEM: Mem = Mem;
 
 pub fn init<'a, 'b>(magic: usize, multiboot: usize) -> Option<Multiboot<'a, 'b>> {
     if magic != 0x2BADB002 {
-        vga::write_str_with_colors("Unknown multiboot ! magic: ", &vga::Colors::Red, &vga::Colors::Black);
-        vga::write_num!(magic);
+        text::write_str_with_colors("Unknown multiboot ! magic: ", &text::Colors::Red, &text::Colors::Black);
+        text::write_num!(magic);
         infinite_loop!();
     }
 

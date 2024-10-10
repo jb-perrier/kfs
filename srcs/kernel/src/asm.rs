@@ -1,12 +1,18 @@
 use core::{arch::asm, ffi::c_void, ptr::addr_of};
 
-use crate::mem::paging::directory::PageDirectory;
+use crate::{idt::IDTPointer, mem::paging::directory::PageDirectory};
 
 use super::gdt::GdtDescriptor;
 
 #[inline]
 pub unsafe fn out_u16(port: u16, val: u16) {
     asm!("out dx, al", in("dx") port, in("al") val as i8);
+}
+
+#[inline]
+pub unsafe fn out_u8(port: u16, val: u8) {
+    asm!("out dx, al", in("dx") port, in("al") val);
+    
 }
 
 #[inline]
@@ -41,6 +47,7 @@ extern "C" {
     pub fn get_stack_top() -> *const u32;
     pub fn get_stack_bottom() -> *const u32;
     pub fn get_stack_ptr() -> *const u32;
+    pub fn _idt_flush(idt: usize);
 }
 
 pub fn enable_paging() {
@@ -67,6 +74,9 @@ pub fn enable_interrupts() {
     unsafe { _enable_interrupts(); }
 }
 
+pub fn idt_flush(idt: *const IDTPointer) {
+    unsafe { _idt_flush(idt as usize); }
+}
 pub unsafe fn load_gdt(gdt: *const GdtDescriptor) {
     _load_gdt(gdt);
 }

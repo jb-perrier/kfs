@@ -2,7 +2,7 @@ use core::ptr::addr_of_mut;
 
 use multiboot::information::Multiboot;
 
-use crate::{infinite_loop, mem::frame::FrameAllocator, process::Process, vga};
+use crate::{infinite_loop, mem::frame::FrameAllocator, process::Process, text};
 
 #[derive(Default)]
 pub struct Kernel<'a, 'b> {

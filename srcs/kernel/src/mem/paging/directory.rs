@@ -1,10 +1,18 @@
 use core::mem::size_of;
 
 use crate::{
-    bits::{get_bit_at, set_bit_at}, error::KernelError, mem::{frame::{Frame, FrameAllocator}, virtual_addr::VirtualAddr}, vga
+    bits::{get_bit_at, set_bit_at},
+    error::KernelError,
+    mem::{
+        frame::{Frame, FrameAllocator}, next_aligned_from_addr, paging::get_directory_entry_from_phys_addr, previous_aligned_from_addr, virtual_addr::VirtualAddr
+    },
+    text,
 };
 
-use super::table::{PageTable, PageTableEntryBuilder};
+use super::{
+    get_page_index_from_phys_addr, get_table_entry_from_phys_addr,
+    table::{PageTable, PageTableEntryBuilder},
+};
 
 #[repr(C, align(4096))]
 #[derive(Clone, Copy)]
@@ -13,7 +21,7 @@ pub struct PageDirectory {
 }
 
 impl PageDirectory {
-    pub fn new(
+    pub fn new_from_frame_allocator(
         frame_allocator: &mut FrameAllocator,
         is_user: bool,
     ) -> Result<*mut PageDirectory, KernelError> {
@@ -26,21 +34,22 @@ impl PageDirectory {
             let mut table = unsafe { &mut *table_addr };
 
             for (j, table_entry) in table.entries.iter_mut().enumerate() {
-                *table_entry = PageTableEntryBuilder::new().build();
+                *table_entry = PageTableEntryBuilder::new().build(); // filled later
             }
 
             *dir_entry = PageDirectoryEntryBuilder::new()
-                .present(true)
-                .read_write(true)
+                .present(false)
+                .read_write(false)
                 .user(is_user)
                 .address(table as *const _ as usize)
                 .build();
         }
         Ok(page_directory_addr)
     }
-
-    pub fn identity(&mut self) {
+    #[allow(clippy::never_loop)]
+    pub fn identity(&mut self, max_addr: usize) {
         let is_user = self.tables[0].user();
+        let mut active_dir = 0;
         for (i, dir_entry) in &mut self.tables.iter_mut().enumerate() {
             let mut table = unsafe { &mut *dir_entry.table() };
 
@@ -49,11 +58,42 @@ impl PageDirectory {
                 let block_addr = base_addr + j * 4096;
                 *table_entry = PageTableEntryBuilder::new()
                     .address(block_addr)
-                    .present(true)
+                    .present(false)
                     .read_write(true)
                     .user(is_user)
                     .build();
             }
+            *dir_entry = PageDirectoryEntryBuilder::new()
+                .present(false)
+                .read_write(true)
+                .user(is_user)
+                .address(table as *const _ as usize)
+                .build();
+        }
+    }
+
+    pub fn map_range_as_identity(&mut self, start: usize, end: usize, is_user: bool) {
+        let block_start = previous_aligned_from_addr(start, 4096);
+        let block_end = next_aligned_from_addr(end, 4096);
+
+        text::write_str("Mapping range as identity: 0x");
+        text::write_num_hex!(block_start);
+        text::write_str(" - 0x");
+        text::write_num_hex!(block_end);
+        text::write_str("\n");
+
+        let mut curr_block = block_start;
+        while curr_block < block_end {
+            let directory_entry = get_directory_entry_from_phys_addr(self, curr_block);
+            directory_entry.set_present(true);
+            let table_entry = get_table_entry_from_phys_addr(self, curr_block);
+            *table_entry = PageTableEntryBuilder::new()
+                    .address(curr_block)
+                    .present(true)
+                    .read_write(true)
+                    .user(is_user)
+                    .build();
+            curr_block += 4096;
         }
     }
 

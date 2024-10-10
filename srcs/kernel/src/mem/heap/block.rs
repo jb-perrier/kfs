@@ -1,6 +1,6 @@
 use core::mem::size_of;
 
-use crate::{error::KernelError, vga};
+use crate::{error::KernelError, infinite_loop, text};
 
 const HEAP_SUB_BLOCK_SIZE: usize = 16;
 
@@ -14,19 +14,21 @@ pub struct HeapBlock {
 impl HeapBlock {
     // start and end should be aligned on 16 bytes
     pub fn new(start: usize, size: usize) -> *mut HeapBlock {
-        vga::write_str("HeapBlock: 0x");
-        vga::write_num_hex!(start);
-        vga::write_str(" - 0x");
-        vga::write_num_hex!(start + size);
-        vga::write_str("\n");
+        text::write_str("HeapBlock: 0x");
+        text::write_num_hex!(start);
+        text::write_str(" - 0x");
+        text::write_num_hex!(start + size);
+        text::write_str("\n");
+        
         let heap_addr = start as *mut HeapBlock;
         let heap = unsafe { &mut *heap_addr };
-
+        
         heap.start = start;
         heap.size = size;
-
-        heap.clear();
-        // // heap.init_bitmap();
+        heap.next = None;
+        
+        // heap.clear();
+        // heap.init_bitmap();
         heap_addr
     }
 
@@ -46,17 +48,18 @@ impl HeapBlock {
     }
 
     pub fn clear(&mut self) {
-        vga::write_str("Clear: 0x");
-        vga::write_num_hex!(self.bitmap_start());
-        vga::write_str(" - 0x");
-        vga::write_num_hex!(self.data_end());
-        vga::write_str(" => ");
-        vga::write_num!(self.data_end() - self.bitmap_start());
-        vga::write_str("\n");
-        // for i in self.bitmap_start()..self.data_end() {
-        //     unsafe { core::ptr::write_unaligned(i as *mut u8, 0_u8) };
-        // }
-        self.init_bitmap();
+        text::write_str("Clear: 0x");
+        text::write_num_hex!(self.bitmap_start());
+        text::write_str(" - 0x");
+        text::write_num_hex!(self.data_end());
+        text::write_str(" => ");
+        text::write_num!(self.data_end() - self.bitmap_start());
+        text::write_str("\n");
+
+        for i in self.bitmap_start()..self.data_end() {
+            unsafe { core::ptr::write_unaligned(i as *mut u8, 0_u8) };
+        }
+        // self.init_bitmap();
     }
 
     pub fn allocate(&mut self, size: usize) -> Result<*mut u8, KernelError> {

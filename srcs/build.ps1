@@ -1,5 +1,3 @@
-.\tools\install-windows-target.ps1
-
 docker build ./tools -t kfs-builder
 $result = docker ps -a -q -f "name=kfs-builder"
 if ([string]::IsNullOrEmpty($result))

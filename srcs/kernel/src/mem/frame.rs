@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{error::KernelError, libc::memset, vga};
+use crate::{error::KernelError, libc::memset, text};
 
 use super::{next_aligned_from_addr, previous_aligned_from_addr};
 

@@ -6,7 +6,6 @@ use super::frame::FrameAllocator;
 
 pub mod block;
 
-#[repr(C)]
 pub struct Heap {
     blocks: *mut HeapBlock,
 }

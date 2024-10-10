@@ -1,8 +1,27 @@
+use core::panic::PanicInfo;
+
 use crate::{infinite_loop, text, Colors};
 
-pub fn panic(msg: &str) -> ! {
+#[panic_handler]
+fn panic(_info: &PanicInfo) -> ! {
     text::clear();
-    text::write_str_with_colors("PANIC: ", &Colors::Black, &Colors::Red);
-    text::write_str_with_colors(msg, &Colors::Black, &Colors::Red);
+    text::write_str_with_colors("Kernel panic !\n", &Colors::Red, &Colors::Black);
+
+    if let Some(msg) = _info.message().as_str() {
+        text::write_str("  Message: ");
+        text::write_str(msg);
+        text::write_str("\n");
+    }
+
+    if let Some(location) = _info.location() {
+        text::write_str("  File: ");
+        text::write_str(location.file());
+        text::write_str(":");
+        text::write_num!(location.line());
+        text::write_str(":");
+        text::write_num!(location.column());
+        text::write_str("\n");
+    }
+
     infinite_loop!()
 }

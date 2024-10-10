@@ -13,7 +13,7 @@ pub mod heap;
 pub mod paging;
 pub mod virtual_addr;
 
-pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory), KernelError> {
+pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory, Heap), KernelError> {
     if !multiboot.has_memory_map() {
         return Err(KernelError::NoMemoryMap);
     }
@@ -26,7 +26,7 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     // let some space between kernel and page tables
     // for some reasons it crashes if we put the tables right after the kernel
     // something use memory just after the kernel memory but i don't know why
-    region.0 = next_aligned_from_addr(kernel_end, FRAME_SIZE);
+    region.0 = next_aligned_from_addr(kernel_end + 16 * FRAME_SIZE, FRAME_SIZE);
     region.1 = previous_aligned_from_addr(region.1, FRAME_SIZE);
 
     let mut frame_allocator = FrameAllocator::new(region);
@@ -48,11 +48,6 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     text::write_str(" pages / ");
     text::write_num!(pages_count * PAGE_SIZE);
     text::write_str(" bytes\n");
-    
-    let max_addr = find_max_addr(multiboot);
-    text::write_str("Max addr: ");
-    text::write_num!(max_addr);
-    text::write_str("\n");
 
     let Ok(page_directory_addr) = paging::init(&mut frame_allocator, multiboot) else {
         return Err(KernelError::Unknown);
@@ -60,8 +55,8 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     
     let inital_heap_frame = frame_allocator.allocate()?;
     let heap = Heap::new(inital_heap_frame as usize, FRAME_SIZE);
-    
-    Ok((frame_allocator, page_directory_addr))
+
+    Ok((frame_allocator, page_directory_addr, heap))
 }
 
 fn find_max_addr(boot_info: &Multiboot) -> usize {

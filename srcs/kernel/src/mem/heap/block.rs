@@ -65,6 +65,11 @@ impl HeapBlock {
     pub fn allocate(&mut self, size: usize) -> Result<*mut u8, KernelError> {
         let size_in_bitmap = size_in_bitmap(size);
         let hole = self.find_hole(size_in_bitmap)?;
+        text::write_str("Allocate: ");
+        text::write_num!(size);
+        text::write_str(" bytes at 0x");
+        text::write_num_hex!(self.data_start() + hole * HEAP_SUB_BLOCK_SIZE);
+        text::write_str("\n");
         self.allocate_in_bitmap(hole, size_in_bitmap);
         let addr = self.data_start() + hole * HEAP_SUB_BLOCK_SIZE;
 

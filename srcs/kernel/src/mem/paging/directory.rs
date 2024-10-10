@@ -29,6 +29,7 @@ impl PageDirectory {
         let page_directory = unsafe { &mut *page_directory_addr };
         let table_size = size_of::<PageTable>();
 
+        let mut count = 0;
         for (i, dir_entry) in &mut page_directory.tables.iter_mut().enumerate() {
             let table_addr = frame_allocator.allocate_zeroed()? as *mut PageTable;
             let mut table = unsafe { &mut *table_addr };
@@ -43,11 +44,15 @@ impl PageDirectory {
                 .user(is_user)
                 .address(table as *const _ as usize)
                 .build();
+            count += 1;
         }
+        text::write_str("Allocating ");
+        text::write_num_hex!(count);
+        text::write_str(" frames\n");
         Ok(page_directory_addr)
     }
     #[allow(clippy::never_loop)]
-    pub fn identity(&mut self, max_addr: usize) {
+    pub fn identity(&mut self) {
         let is_user = self.tables[0].user();
         let mut active_dir = 0;
         for (i, dir_entry) in &mut self.tables.iter_mut().enumerate() {
@@ -58,13 +63,13 @@ impl PageDirectory {
                 let block_addr = base_addr + j * 4096;
                 *table_entry = PageTableEntryBuilder::new()
                     .address(block_addr)
-                    .present(false)
+                    .present(true)
                     .read_write(true)
                     .user(is_user)
                     .build();
             }
             *dir_entry = PageDirectoryEntryBuilder::new()
-                .present(false)
+                .present(true)
                 .read_write(true)
                 .user(is_user)
                 .address(table as *const _ as usize)
@@ -74,7 +79,7 @@ impl PageDirectory {
 
     pub fn map_range_as_identity(&mut self, start: usize, end: usize, is_user: bool) {
         let block_start = previous_aligned_from_addr(start, 4096);
-        let block_end = next_aligned_from_addr(end, 4096);
+        let block_end = previous_aligned_from_addr(end, 4096);
 
         text::write_str("Mapping range as identity: 0x");
         text::write_num_hex!(block_start);

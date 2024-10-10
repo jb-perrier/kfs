@@ -38,30 +38,6 @@ macro_rules! infinite_loop {
     };
 }
 
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    text::clear();
-    text::write_str_with_colors("Kernel panic !\n", &Colors::Red, &Colors::Black);
-
-    if let Some(msg) = _info.message().as_str() {
-        text::write_str("  Message: ");
-        text::write_str(msg);
-        text::write_str("\n");
-    }
-
-    if let Some(location) = _info.location() {
-        text::write_str("  File: ");
-        text::write_str(location.file());
-        text::write_str(":");
-        text::write_num!(location.line());
-        text::write_str(":");
-        text::write_num!(location.column());
-        text::write_str("\n");
-    }
-
-    infinite_loop!()
-}
-
 pub fn start(multiboot: usize, magic: usize) {
     disable_interrupts();
     text::clear();
@@ -92,10 +68,10 @@ pub fn start(multiboot: usize, magic: usize) {
     }
     asm::enable_interrupts();
 
-    // let Ok(mem_result) = mem::init(&boot_info) else {
-    //     text::write_str_with_colors("Failed to init memory !", &Colors::Red, &Colors::Black);
-    //     infinite_loop!();
-    // };
+    let Ok((frame_allocator, page_directory, heap)) = mem::init(&boot_info) else {
+        text::write_str_with_colors("Failed to init memory !", &Colors::Red, &Colors::Black);
+        infinite_loop!();
+    };
 
     // Check GDT
     // vga::write_str_with_colors(
@@ -117,12 +93,12 @@ pub fn start(multiboot: usize, magic: usize) {
     dump(STR_BUFFER.as_ptr(), STR_BUFFER.as_ptr().add(STR_BUFFER.len()));
     let index = vga::get_index();
     vga::set_cursor_pos(index);*/
+    
+    // let heap_alloc = heap.allocate(16).unwrap();
+    // text::write_str("Alloc addr: 0x");
+    // text::write_num_hex!(heap_alloc as usize);
+    // text::write_str("\n");
 
-    // let heap_alloc = kernel.process.heap_mut().allocate(16).unwrap();
-    // vga::write_str("Alloc addr: 0x");
-    // vga::write_num_hex!(heap_alloc as usize);
-    // vga::write_str("\n");
-
-    text::write_str_with_colors("Kernel initialized !", &Colors::Green, &Colors::Black);
+    text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
     infinite_loop!();
 }

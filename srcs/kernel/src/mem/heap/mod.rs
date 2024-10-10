@@ -1,6 +1,6 @@
 use block::HeapBlock;
 
-use crate::error::KernelError;
+use crate::{error::KernelError, infinite_loop};
 
 use super::frame::FrameAllocator;
 

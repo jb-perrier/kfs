@@ -2,6 +2,8 @@
 
 use core::ptr::addr_of;
 
+use crate::error::KernelError;
+
 use super::asm;
 
 const SEGMENT_DATA_RD: u8 = 0x00; // Read-Only
@@ -25,26 +27,16 @@ const KERNEL_CODE_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_CODE_E
 const KERNEL_DATA_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_DATA_RDWR);
 const KERNEL_STACK_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_DATA_RDWREXPD);
 
-const USER_CODE_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_CODE_EXRD);
-const USER_DATA_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_DATA_RDWR);
-const USER_STACK_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 0, SEGMENT_DATA_RDWREXPD);
+const USER_CODE_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 3, SEGMENT_CODE_EXRD);
+const USER_DATA_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 3, SEGMENT_DATA_RDWR);
+const USER_STACK_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 3, SEGMENT_DATA_RDWREXPD);
 
 static mut GDT_DESCRIPTOR_PTR: *mut GdtDescriptor = unsafe { 0x00000800 as *mut GdtDescriptor };
+static mut TSS: Tss = Tss::new();
 
-const GDT_SIZE: usize = 7;
+const GDT_SIZE: usize = 8;
 
-static mut GDT: [GdtEntry; GDT_SIZE] = [
-    // null
-    GdtEntry::new(0, 0, 0, 0),
-    // kernel
-    GdtEntry::new(0, 0xFFFFF, KERNEL_CODE_SEGMENT, 0xCF),
-    GdtEntry::new(0, 0xFFFFF, KERNEL_DATA_SEGMENT, 0xCF),
-    GdtEntry::new(0, 0xFFFFF, KERNEL_STACK_SEGMENT, 0xCF),
-    // user
-    GdtEntry::new(0, 0xFFFFF, USER_CODE_SEGMENT, 0xCF),
-    GdtEntry::new(0, 0xFFFFF, USER_DATA_SEGMENT, 0xCF),
-    GdtEntry::new(0, 0xFFFFF, USER_STACK_SEGMENT, 0xCF),
-];
+static mut GDT: [GdtEntry; GDT_SIZE] = [GdtEntry::new(0,0,0,0); GDT_SIZE];
 
 // LINK : Previous Task Link
 // ESP : Stack Pointers used to load the stack when a privilege level change occurs from a lower privilege level to a higher one.
@@ -97,7 +89,54 @@ pub struct Tss {
     ssp: u32,
 }
 
+impl Tss {
+    pub const fn new() -> Self {
+        Tss {
+            link: 0,
+            _link_reserved: 0,
+            esp0: 0,
+            ss0: 0,
+            _ss0_reserved: 0,
+            esp1: 0,
+            ss1: 0,
+            _ss1_reserved: 0,
+            esp2: 0,
+            ss2: 0,
+            _ss2_reserved: 0,
+            cr3: 0,
+            eip: 0,
+            eflags: 0,
+            eax: 0,
+            ecx: 0,
+            edx: 0,
+            ebx: 0,
+            esp: 0,
+            ebp: 0,
+            esi: 0,
+            edi: 0,
+            es: 0,
+            _es_reserved: 0,
+            cs: 0,
+            _cs_reserved: 0,
+            ss: 0,
+            _ss_reserved: 0,
+            ds: 0,
+            _ds_reserved: 0,
+            fs: 0,
+            _fs_reserved: 0,
+            gs: 0,
+            _gs_reserved: 0,
+            ldt: 0,
+            _ldt_reserved: 0,
+            _iopb_reserved: 0,
+            iomap_base: 0,
+            ssp: 0,
+        }
+    }
+}
+
 #[repr(C, packed)]
+#[derive(Clone, Copy)]
 pub struct GdtEntry {
     limit_low: u16,
     base_low: u16,
@@ -126,7 +165,18 @@ impl GdtEntry {
     }
 }
 
-pub fn init() -> Result<(), ()> {
+pub fn init() -> Result<(), KernelError> {
+    unsafe {
+        GDT[0] = GdtEntry::new(0, 0, 0, 0);
+        GDT[1] = GdtEntry::new(0, 0xFFFFFFFF, KERNEL_CODE_SEGMENT, 0xCF);
+        GDT[2] = GdtEntry::new(0, 0xFFFFFFFF, KERNEL_DATA_SEGMENT, 0xCF);
+        GDT[3] = GdtEntry::new(0, 0xFFFFFFFF, KERNEL_STACK_SEGMENT, 0xCF);
+        GDT[4] = GdtEntry::new(0, 0xFFFFFFFF, USER_CODE_SEGMENT, 0xCF);
+        GDT[5] = GdtEntry::new(0, 0xFFFFFFFF, USER_DATA_SEGMENT, 0xCF);
+        GDT[6] = GdtEntry::new(0, 0xFFFFFFFF, USER_STACK_SEGMENT, 0xCF);
+        GDT[7] = GdtEntry::new(addr_of!(TSS) as u32, core::mem::size_of::<Tss>() as u32, 0xE9, 0x00);
+    }
+
     unsafe {
         *GDT_DESCRIPTOR_PTR = GdtDescriptor {
             size: (core::mem::size_of::<[GdtEntry; GDT_SIZE]>() - 1) as u16,
@@ -135,7 +185,7 @@ pub fn init() -> Result<(), ()> {
         asm::load_gdt(GDT_DESCRIPTOR_PTR);
     }
     if asm::check_gdt() != 0 {
-        return Err(());
+        return Err(KernelError::InvalidGDT);
     }
     Ok(())
 }

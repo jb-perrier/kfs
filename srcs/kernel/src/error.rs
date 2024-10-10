@@ -7,5 +7,6 @@ pub enum KernelError {
     FrameOutOfMemory,
     HeapOutOfMemory,
     PagDirectoryFull,
+    InvalidGDT,
     Unknown,
 }

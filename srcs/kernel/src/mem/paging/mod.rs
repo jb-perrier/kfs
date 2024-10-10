@@ -22,20 +22,21 @@ pub fn init(
 ) -> Result<*mut PageDirectory, KernelError> {
     let addr = PageDirectory::new_from_frame_allocator(frame_allocator, true)?;
 
-    for mem in multiboot.memory_regions().unwrap() {
-        if (mem.base_address() + mem.length() > usize::MAX as u64) {
-            continue;
-        }
-        let start = mem.base_address() as usize;
-        let end = mem.base_address() as usize + mem.length() as usize;
-        unsafe {
-            (*addr).map_range_as_identity(mem.base_address() as usize, end, false);
-        }
-    }
-    // infinite_loop!();
+    // for mem in multiboot.memory_regions().unwrap() {
+    //     if (mem.base_address() + mem.length() > usize::MAX as u64) {
+    //         continue;
+    //     }
+    //     let start = mem.base_address() as usize;
+    //     let end = mem.base_address() as usize + mem.length() as usize;
+    //     unsafe {
+    //         (*addr).map_range_as_identity(mem.base_address() as usize, end, false);
+    //     }
+    // }
+
+    // unsafe { (*addr).map_range_as_identity(0, 0xFFFFFFFF, false); }
+    unsafe { (*addr).identity(); }
     asm::set_page_directory(addr);
     asm::enable_paging();
-
     
     text::write_str_with_colors(
         "Pagination initialized !",
@@ -48,7 +49,7 @@ pub fn init(
         &text::Colors::DarkGray,
         &text::Colors::Black,
     );
-
+    let addr = 0 as *mut PageDirectory;
     Ok(addr)
 }
 

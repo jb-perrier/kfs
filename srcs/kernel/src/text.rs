@@ -58,16 +58,6 @@ pub fn write(c: char) {
     write_with_colors(c, &Colors::White, &Colors::Black);
 }
 
-pub fn write_at_index(c: char, index: u32) {
-    unsafe {
-        if index >= VGA_BUFFER_SIZE {
-            clear();
-        }
-        let cha = VGA_ADDR.offset(index as isize).cast_mut();
-        *cha = build_char(c, &Colors::White, &Colors::Black);
-    }
-}
-
 pub fn set_cursor_pos(pos: u32) {
     unsafe {
         let u16pos = pos as u16;
@@ -124,7 +114,18 @@ pub fn erase() {
 pub fn write_with_colors(c: char, fore_color: &Colors, back_color: &Colors) {
     unsafe {
         if INDEX >= VGA_BUFFER_SIZE {
-            clear();
+            // Move all lines up
+            for i in 0..VGA_BUFFER_SIZE - VGA_COLUMNS {
+                let cha = VGA_ADDR.offset(i as isize).cast_mut();
+                *cha = *VGA_ADDR.offset((i + VGA_COLUMNS) as isize);
+            }
+            // Clear last line
+            for i in (VGA_BUFFER_SIZE - VGA_COLUMNS..VGA_BUFFER_SIZE).rev() {
+                let cha = VGA_ADDR.offset(i as isize).cast_mut();
+                *cha = build_char(' ', fore_color, back_color);
+            }
+            INDEX -= VGA_COLUMNS;
+            CURSOR_INDEX -= VGA_COLUMNS;
         }
         match c {
             '\n' => {

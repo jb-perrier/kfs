@@ -103,9 +103,11 @@ pub fn start(multiboot: usize, magic: usize) {
     let heap_alloc = heap.allocate(16).unwrap();
     text::write_str("Alloc addr: 0x");
     text::write_num_hex!(heap_alloc as usize);
+    text::write_str(" size: ");
+    text::write_num!(heap.get_size(heap_alloc).unwrap());
     text::write_str("\n");
 
-    heap.deallocate(heap_alloc, 16);
+    heap.deallocate(heap_alloc);
 
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
     infinite_loop!();

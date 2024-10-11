@@ -4,7 +4,11 @@ use crate::{error::KernelError, infinite_loop};
 
 use super::frame::FrameAllocator;
 
-pub mod block;
+mod block;
+pub use block::*;
+
+mod error;
+pub use error::*;
 
 pub struct Heap {
     blocks: *mut HeapBlock,
@@ -30,14 +34,13 @@ impl Heap {
         }
     }
 
-    pub fn allocate(&mut self, size: usize) -> Result<*mut u8, KernelError> {
+    pub fn allocate(&mut self, size: usize) -> Result<*mut u8, Error> {
         let mut current = self.blocks;
         loop {
             let block = unsafe { &mut *current };
             match block.allocate(size) {
                 Ok(ptr) => return Ok(ptr),
-                // try other blocks before asking for a new page
-                Err(KernelError::HeapOutOfMemory) => {}
+                Err(Error::OutOfMemory) => { /* moving to next block */ }
                 Err(e) => return Err(e),
             }
             if let Some(next) = block.next() {
@@ -46,16 +49,16 @@ impl Heap {
                 break;
             }
         }
-        Err(KernelError::HeapOutOfMemory)
+        Err(Error::OutOfMemory)
     }
 
-    pub fn deallocate(&mut self, ptr: *mut u8, size: usize) -> Result<(), KernelError> {
+    pub fn deallocate(&mut self, ptr: *mut u8) -> Result<(), Error> {
         let mut current = self.blocks;
         loop {
             let block = unsafe { &mut *current };
-            match block.deallocate(ptr, size) {
+            match block.deallocate(ptr) {
                 Ok(()) => return Ok(()),
-                Err(KernelError::InvalidPointer) => {}
+                Err(Error::Unallocated) => {}
                 Err(e) => return Err(e),
             }
             if let Some(next) = block.next() {
@@ -64,7 +67,7 @@ impl Heap {
                 break;
             }
         }
-        Err(KernelError::InvalidPointer)
+        Err(Error::Unallocated)
     }
 
     pub fn is_allocated(&self, ptr: *mut u8) -> bool {
@@ -81,5 +84,21 @@ impl Heap {
             }
         }
         false
+    }
+
+    pub fn get_size(&self, ptr: *mut u8) -> Result<usize, Error> {
+        let mut current = self.blocks;
+        loop {
+            let block = unsafe { &*current };
+            if let Ok(size) = block.get_size(ptr) {
+                return Ok(size);
+            }
+            if let Some(next) = block.next() {
+                current = next;
+            } else {
+                break;
+            }
+        }
+        Err(Error::Unallocated)
     }
 }

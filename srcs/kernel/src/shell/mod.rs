@@ -25,8 +25,11 @@ pub fn execute() {
                 Some("clear") => {
                     text::clear();
                 }
-                Some("jeremy") => {
-                    text::write_str("Gros fils de pute le jeremy\n");
+                Some("quoi") => {
+                    text::write_str("QUOICOUBEH\n");
+                }
+                Some("ah") => {
+                    text::write_str("APAGNAN\n");
                 }
                 Some("help") => {
                     text::write_str("Commands:\n");

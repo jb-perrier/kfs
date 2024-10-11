@@ -1,4 +1,5 @@
 
+#[derive(Clone, Copy)]
 pub enum Key {
 	None,
 	Shift,
@@ -99,7 +100,45 @@ pub const QWERTY_MAP: [Key; 128] = [
 	Key::None,
 	Key::None,              /* F11 */
 	Key::None,              /* F12 */
-	Key::None 
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
+	Key::None,
 ];
 
 // pub const QWERTY_SHIFT_MAP_CONST: [Option<char>; 128] = [
@@ -145,5 +184,5 @@ pub const QWERTY_MAP: [Key; 128] = [
 // ];
 
 pub fn get_char(layout: &[Key; 128], scancode: u8) -> Key {
-	layout.get(scancode).unwrap_or(Key::None)
+	*layout.get(scancode as usize).unwrap_or(&Key::None)
 }

@@ -1,6 +1,5 @@
 use crate::{asm, error::KernelError, idt::{handler::set_interrupt_handler, registers::Registers}, text};
-use layouts::{get_char, QWERTY_MAP};
-use std::collections::HashMap;
+use layouts::{get_char, Key, QWERTY_MAP};
 
 pub mod layouts;
 
@@ -21,7 +20,10 @@ fn detect_layout() -> &'static [Key; 128] {
 }
 
 fn keyboard_handler(reg: Registers) {
-    let scancode = unsafe { asm::in_u8(KEYBOARD_PORT) };
+    let scancode  = unsafe { asm::in_u8(KEYBOARD_PORT) };
+    if scancode >= 128 {
+        return; // TODO: handle released keys
+    }
     let layout = detect_layout();
     if let Key::Char(c) = get_char(layout, scancode) {
         text::write(c);

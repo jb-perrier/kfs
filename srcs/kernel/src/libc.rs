@@ -40,8 +40,10 @@ pub unsafe extern "C" fn memset(s: *mut i32, c: i32, n: isize) -> *mut i32 {
 pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, n: isize) -> i32 {
     let mut i = 0;
     while i < n {
-        if *s1.offset(i) != *s2.offset(i) {
-            return (*s1.offset(i) - *s2.offset(i)) as i32;
+        let left = *s1.offset(i) as i32;
+        let right = *s2.offset(i) as i32;
+        if left != right {
+            return left - right;
         }
         i += 1;
     }

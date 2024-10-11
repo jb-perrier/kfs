@@ -20,6 +20,7 @@ pub mod kernel;
 pub mod error;
 pub mod idt;
 pub mod keyboard;
+pub mod shell;
 
 mod kmain;
 
@@ -108,5 +109,7 @@ pub fn start(multiboot: usize, magic: usize) {
     heap.deallocate(heap_alloc, 16);
 
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
+    
+    shell::print_shell();
     infinite_loop!();
 }

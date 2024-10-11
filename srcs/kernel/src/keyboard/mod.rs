@@ -1,4 +1,6 @@
-use crate::{asm, error::KernelError, idt::{handler::set_interrupt_handler, registers::Registers}, text};
+use crate::{
+    asm, error::KernelError, idt::{handler::set_interrupt_handler, registers::Registers}, set_index, shell, text
+};
 use layouts::{get_char, Key, QWERTY_MAP};
 
 pub mod layouts;
@@ -7,6 +9,9 @@ pub mod layouts;
 const KEYBOARD_PORT: u16 = 0x60;
 const KEYBOARD_INTERRUPT: usize = 33;
 
+static mut SHIFT_PRESSED: bool = false;
+static mut CTRL_PRESSED: bool = false;
+static mut CAPS_LOCK: bool = false;
 
 pub fn init() -> Result<(), KernelError> {
     set_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
@@ -14,19 +19,82 @@ pub fn init() -> Result<(), KernelError> {
 }
 
 fn detect_layout() -> &'static [Key; 128] {
-    // For simplicity, we assume QWERTY layout is default
-    // You can implement a more sophisticated detection mechanism here
-    &QWERTY_MAP
+    unsafe {
+        if SHIFT_PRESSED || CAPS_LOCK {
+            &layouts::QWERTY_MAP_MAJ
+        } else {
+            &layouts::QWERTY_MAP
+        }
+    }
 }
 
 fn keyboard_handler(reg: Registers) {
-    let scancode  = unsafe { asm::in_u8(KEYBOARD_PORT) };
-    if scancode >= 128 {
-        return; // TODO: handle released keys
-    }
+    let scancode = unsafe { asm::in_u8(KEYBOARD_PORT) };
     let layout = detect_layout();
-    if let Key::Char(c) = get_char(layout, scancode) {
-        text::write(c);
+    if scancode >= 128 {
+        let key = get_char(layout, scancode - 128);
+        match key {
+            Key::Shift => unsafe {
+                SHIFT_PRESSED = false;
+            },
+            Key::Ctrl => unsafe {
+                CTRL_PRESSED = false;
+            },
+            _ => {}
+        }
+    } else {
+        let key = get_char(layout, scancode);
+        match key {
+            Key::Char(c) => {
+                shell::add_char(c);
+            }
+            Key::Backspace => {
+                shell::remove_char();
+            }
+            Key::LeftArrow => {
+                shell::move_left();
+                // let index = text::get_index();
+                // if index > 0 {
+                //     text::set_cursor_pos(index - 1);
+                //     text::set_index(index - 1);
+                // }
+            }
+            Key::RightArrow => {
+                shell::move_right();
+                // let index = text::get_index();
+                // if index < 80 * 24 {
+                //     text::set_cursor_pos(index + 1);
+                //     text::set_index(index + 1);
+                // }
+            }
+            Key::UpArrow => {
+                // let index = text::get_index();
+                // if index >= 80 {
+                //     text::set_cursor_pos(index - 80);
+                //     text::set_index(index - 80);
+                // }
+            }
+            Key::DownArrow => {
+                // let index = text::get_index();
+                // if index < 80 * 24 {
+                //     text::set_cursor_pos(index + 80);
+                //     text::set_index(index + 80);
+                // }
+            }
+            Key::Shift => unsafe {
+                SHIFT_PRESSED = true;
+            },
+            Key::Ctrl => unsafe {
+                CTRL_PRESSED = true;
+            },
+            Key::CapsLock => unsafe {
+                CAPS_LOCK = !CAPS_LOCK;
+            },
+            Key::Enter => {
+                shell::execute();
+            }
+            _ => {}
+        }
     }
     unsafe {
         asm::out_u8(0x20, 0x20);

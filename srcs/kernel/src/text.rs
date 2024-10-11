@@ -6,6 +6,8 @@ const VGA_COLUMNS: u32 = 80;
 const VGA_BUFFER_SIZE: u32 = VGA_ROWS * VGA_COLUMNS;
 
 static mut INDEX: u32 = 0;
+static mut CURSOR_POS: u32 = 0;
+static mut CURSOR_INDEX: u32 = 0;
 
 #[repr(u8)]
 #[derive(Copy, Clone)]
@@ -43,6 +45,7 @@ pub fn clear() {
             i += 1;
         }
         INDEX = 0;
+        CURSOR_INDEX = 0;
     }
 }
 
@@ -51,13 +54,21 @@ fn build_char(c: char, fore_color: &Colors, back_color: &Colors) -> u16 {
     c as u16 | (attrib << 8)
 }
 
-#[inline]
 pub fn write(c: char) {
     write_with_colors(c, &Colors::White, &Colors::Black);
 }
 
-#[inline]
-pub fn set_cursor_pos(pos: isize) {
+pub fn write_at_index(c: char, index: u32) {
+    unsafe {
+        if index >= VGA_BUFFER_SIZE {
+            clear();
+        }
+        let cha = VGA_ADDR.offset(index as isize).cast_mut();
+        *cha = build_char(c, &Colors::White, &Colors::Black);
+    }
+}
+
+pub fn set_cursor_pos(pos: u32) {
     unsafe {
         let u16pos = pos as u16;
         asm::out_u16(0x3D4, 0x0E);
@@ -67,7 +78,49 @@ pub fn set_cursor_pos(pos: isize) {
     }
 }
 
-#[inline]
+// Get the index of the last character written
+pub fn get_index() -> u32 {
+    unsafe {
+        INDEX
+    }
+}
+
+pub fn set_index(index: u32) {
+    unsafe {
+        INDEX = index;
+    }
+}
+
+pub fn get_cursor_index() -> u32 {
+    unsafe {
+        CURSOR_INDEX
+    }
+}
+
+pub fn set_cursor_index(index: u32) {
+    unsafe {
+        CURSOR_INDEX = index;
+    }
+}
+
+pub fn erase() {
+    unsafe {
+        if CURSOR_INDEX != 0 {
+            if CURSOR_INDEX != INDEX {
+                for i in CURSOR_INDEX..INDEX {
+                    let cha = VGA_ADDR.offset((i - 1) as isize).cast_mut();
+                    *cha = *VGA_ADDR.offset(i as isize);
+                }
+
+                let cha = VGA_ADDR.offset((INDEX - 1) as isize).cast_mut();
+                *cha = build_char(' ', &Colors::White, &Colors::Black);
+                CURSOR_INDEX -= 1;
+                INDEX -= 1;
+            }
+        }
+    }
+}
+
 pub fn write_with_colors(c: char, fore_color: &Colors, back_color: &Colors) {
     unsafe {
         if INDEX >= VGA_BUFFER_SIZE {
@@ -76,16 +129,26 @@ pub fn write_with_colors(c: char, fore_color: &Colors, back_color: &Colors) {
         match c {
             '\n' => {
                 INDEX += VGA_COLUMNS - (INDEX % VGA_COLUMNS);
+                CURSOR_INDEX = INDEX;
             }
             '\t' => {
                 INDEX += 4;
+                CURSOR_INDEX = INDEX;
             }
             '\r' => {
-                INDEX -= INDEX % VGA_COLUMNS ;
+                INDEX -= INDEX % VGA_COLUMNS;
+                CURSOR_INDEX = INDEX;
             }
             c => {
-                let cha = VGA_ADDR.offset(INDEX as isize).cast_mut();
+                if CURSOR_INDEX != INDEX {
+                    for i in (CURSOR_INDEX..INDEX).rev() {
+                        let cha = VGA_ADDR.offset((i + 1) as isize).cast_mut();
+                        *cha = *VGA_ADDR.offset(i as isize);
+                    }
+                }
+                let cha = VGA_ADDR.offset(CURSOR_INDEX as isize).cast_mut();
                 *cha = build_char(c, fore_color, back_color);
+                CURSOR_INDEX += 1;
                 INDEX += 1;
             }
         }

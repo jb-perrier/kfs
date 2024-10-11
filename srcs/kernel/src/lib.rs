@@ -1,8 +1,11 @@
 #![no_std]
 #![no_main]
-#![allow(unused)]
 #![feature(strict_provenance)]
-#[allow(clippy::not_unsafe_ptr_arg_deref)]
+#![allow(unused)]
+#![allow(clippy::not_unsafe_ptr_arg_deref)]
+#![allow(clippy::vec_init_then_push)]
+
+extern crate alloc;
 
 pub mod asm;
 pub mod bits;
@@ -25,10 +28,11 @@ pub mod shell;
 mod kmain;
 
 use self::{cmos::Cmos, time::Time};
+use alloc::vec::Vec;
 use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
 use kernel::Kernel;
 use process::Process;
-use core::{ffi::c_void, mem::size_of, panic::PanicInfo, panic::PanicMessage};
+use core::{ffi::c_void, mem::size_of, panic::{PanicInfo, PanicMessage}};
 use dump::{dump, print_as_hex};
 use multiboot::information::MemoryType;
 use text::*;
@@ -89,6 +93,12 @@ pub fn start(multiboot: usize, magic: usize) {
 
     heap.deallocate(heap_alloc);
 
+    let mut v: Vec<isize> = Vec::with_capacity(5);
+    // v.push(56);
+    // text::write_str("Value in vec: ");
+    // text::write_num!(v[0]);
+    // text::write_str("\n");
+    
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
     
     shell::print_shell();

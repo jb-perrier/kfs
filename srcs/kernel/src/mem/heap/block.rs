@@ -67,12 +67,17 @@ impl HeapBlock {
         if self.alloc_count == 255 {
             return Err(super::Error::OutOfMemory);
         }
+        text::write_str("#1\n");
         let size_in_bitmap = size_in_bitmap(size);
+        text::write_str("#2\n");
         let hole = self.find_hole(size_in_bitmap).ok_or(super::Error::OutOfMemory)?;
+        text::write_str("#3\n");
         let uid = self.find_free_uid().ok_or(super::Error::OutOfMemory)?;
+        text::write_str("#4\n");
         self.allocate_in_bitmap(hole, size_in_bitmap, uid);
+        text::write_str("#5\n");
         let addr = self.data_start() + hole * HEAP_SUB_BLOCK_SIZE;
-
+        text::write_str("#6\n");
         Ok(addr as *mut u8)
     }
 
@@ -108,6 +113,7 @@ impl HeapBlock {
 
     fn get_ptr_from_uid(&self, uid: u8) -> Option<*mut u8> {
         for i in 0..self.bitmap_size() {
+            text::write_str("#3.1.1\n");
             let bitmap_value = self.get_bitmap_value(i)?;
             if bitmap_value == uid {
                 return Some((self.data_start() + i * HEAP_SUB_BLOCK_SIZE) as *mut u8);
@@ -131,6 +137,7 @@ impl HeapBlock {
 
     fn find_free_uid(&self) -> Option<u8> {
         for i in 1..=255 {
+            text::write_str("#3.1\n");
             let bitmap_value = self.get_ptr_from_uid(i);
             if bitmap_value.is_none() {
                 return Some(i);

@@ -49,3 +49,19 @@ pub unsafe extern "C" fn memcmp(s1: *const u8, s2: *const u8, n: isize) -> i32 {
     }
     0
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn memmove(dest: *mut u8, src: *const u8, n: isize) {
+    if dest.is_null() || src.is_null() || n <= 0{
+        return;
+    }
+    if (src as usize) < (dest as usize) {
+        for i in (n - 1)..=0 {
+            *dest.offset(i) = *src.offset(i);
+        }
+    } else {
+        for i in 0..n {
+            *dest.offset(i) = *src.offset(i);
+        }
+    }
+}

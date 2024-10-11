@@ -19,6 +19,7 @@ pub mod process;
 pub mod kernel;
 pub mod error;
 pub mod idt;
+pub mod keyboard;
 
 mod kmain;
 

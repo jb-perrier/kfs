@@ -1,5 +1,5 @@
 {
-    "rust-analyzer.check.targets": ["i586-pc-windows-msvc"],
+    "rust-analyzer.check.targets": "i586-pc-windows-msvc",
     "rust-analyzer.check.allTargets": false,
     "rust-analyzer.linkedProjects": [
         "./srcs/kernel/Cargo.toml"

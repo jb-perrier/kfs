@@ -78,27 +78,6 @@ pub fn start(multiboot: usize, magic: usize) {
         text::write_str_with_colors("Failed to init keyboard !", &Colors::Red, &Colors::Black);
         infinite_loop!();
     }
-
-    // Check GDT
-    // vga::write_str_with_colors(
-    //     include_str!("./header_top"),
-    //     &Colors::Green,
-    //     &Colors::Black,
-    // );
-    // vga::write('\n');
-    // vga::write_str(include_str!("./header_bottom"));
-    // vga::write('\n');
-
-    /*self.write_str("Dump stack:\n");
-    let stack_ptr = asm::get_stack_ptr() as *const u8;
-    let stack_top = asm::get_stack_top() as *const u8;
-    dump(stack_ptr, stack_top);
-
-    self.write_str("\n");
-    const STR_BUFFER: &str = "Dump GDT: hello this is a very nice text indeed!\n";
-    dump(STR_BUFFER.as_ptr(), STR_BUFFER.as_ptr().add(STR_BUFFER.len()));
-    let index = vga::get_index();
-    vga::set_cursor_pos(index);*/
     
     let heap_alloc = heap.allocate(16).unwrap();
     text::write_str("Alloc addr: 0x");

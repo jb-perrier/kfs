@@ -63,9 +63,9 @@ pub extern "C" fn irq_handler(regs: Registers) {
 
         // ignore PIC signal
         if regs.int_no != 32 {
-            text::write_str("IRQ: ");
-            text::write_num!(regs.int_no);
-            text::write_str("\n");
+            // text::write_str("IRQ: ");
+            // text::write_num!(regs.int_no);
+            // text::write_str("\n");
         }
 
         if let Some(handler) = get_interrupt_handler(regs.int_no as usize) {

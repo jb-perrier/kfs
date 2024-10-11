@@ -45,7 +45,6 @@ pub extern "C" fn isr_handler(regs: Registers) {
         }
         print_isr(regs);
     }
-    infinite_loop!();
 }
 
 fn print_isr(regs: Registers) {

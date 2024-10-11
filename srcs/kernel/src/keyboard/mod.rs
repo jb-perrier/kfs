@@ -1,4 +1,4 @@
-use crate::idt::{handler::set_interrupt_handler, registers::Registers};
+use crate::{asm, error::KernelError, idt::{handler::set_interrupt_handler, registers::Registers}, text};
 
 // Const of the keyboard port
 const KEYBOARD_PORT: u16 = 0x60;
@@ -6,7 +6,6 @@ const KEYBOARD_INTERRUPT: usize = 33;
 
 pub fn init() -> Result<(), KernelError> {
     set_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
-
     Ok(())
 }
 
@@ -68,7 +67,7 @@ fn keyboard_handler(reg: Registers) {
     };
 
     if let Some(key) = key {
-        text::write_char(key);
+        text::write(key);
     }
 
     unsafe {
@@ -76,3 +75,4 @@ fn keyboard_handler(reg: Registers) {
     }
 
 }
+

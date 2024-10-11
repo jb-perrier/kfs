@@ -74,6 +74,11 @@ pub fn start(multiboot: usize, magic: usize) {
         infinite_loop!();
     };
 
+    if let Err(_) = keyboard::init() {
+        text::write_str_with_colors("Failed to init keyboard !", &Colors::Red, &Colors::Black);
+        infinite_loop!();
+    }
+
     // Check GDT
     // vga::write_str_with_colors(
     //     include_str!("./header_top"),

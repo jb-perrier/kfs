@@ -4,7 +4,6 @@ use crate::{infinite_loop, text, Colors};
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
-    text::clear();
     text::write_str_with_colors("Kernel panic !\n", &Colors::Red, &Colors::Black);
 
     if let Some(msg) = _info.message().as_str() {

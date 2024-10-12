@@ -1,6 +1,6 @@
 use core::{alloc::Layout, ptr::addr_of};
 use frame::{FrameAllocator, FRAME_SIZE};
-use heap::Heap;
+use heap::{Heap, HEAP};
 use multiboot::information::{MemoryType, Multiboot};
 use paging::{directory::PageDirectory, PAGE_SIZE};
 
@@ -13,7 +13,7 @@ pub mod heap;
 pub mod paging;
 pub mod virtual_addr;
 
-pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory, Heap), KernelError> {
+pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory), KernelError> {
     if !multiboot.has_memory_map() {
         return Err(KernelError::NoMemoryMap);
     }
@@ -54,9 +54,9 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     };
     
     let inital_heap_frame = frame_allocator.allocate()?;
-    let heap = Heap::new(inital_heap_frame as usize, FRAME_SIZE);
+    unsafe { HEAP = Heap::new(inital_heap_frame as usize, FRAME_SIZE); }
 
-    Ok((frame_allocator, page_directory_addr, heap))
+    Ok((frame_allocator, page_directory_addr))
 }
 
 fn find_max_addr(boot_info: &Multiboot) -> usize {

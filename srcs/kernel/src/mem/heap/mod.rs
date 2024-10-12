@@ -1,4 +1,4 @@
-use core::alloc::GlobalAlloc;
+use core::alloc::{GlobalAlloc, Layout};
 
 use block::HeapBlock;
 
@@ -12,7 +12,7 @@ pub use block::*;
 mod error;
 pub use error::*;
 
-static mut HEAP: Heap = Heap::empty();
+pub static mut HEAP: Heap = Heap::empty();
 
 #[global_allocator]
 static mut HEAP_ALLOCATOR: HeapAllocator = HeapAllocator {};
@@ -48,11 +48,17 @@ impl Heap {
         }
     }
 
-    pub fn allocate(&mut self, size: usize) -> Result<*mut u8, Error> {
+    pub fn allocate(&mut self, layout: Layout) -> Result<*mut u8, Error> {
+        text::write_str("HEAP: Allocating: ");
+        text::write_num!(layout.size());
+        text::write_str(" bytes, align: ");
+        text::write_num!(layout.align());
+        text::write_str("\n");
+        
         let mut current = self.blocks;
         loop {
             let block = unsafe { &mut *current };
-            match block.allocate(size) {
+            match block.allocate(layout) {
                 Ok(ptr) => return Ok(ptr),
                 Err(Error::OutOfMemory) => { /* moving to next block */ }
                 Err(e) => return Err(e),
@@ -119,11 +125,9 @@ impl Heap {
 
 unsafe impl GlobalAlloc for HeapAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        text::write_str("Allocating ");
-        text::write_num!(layout.size());
-        text::write_str(" bytes\n");
+        text::write_str("GlobalAlloc::alloc\n");
         let heap = &mut HEAP;
-        match heap.allocate(layout.size()) {
+        match heap.allocate(layout) {
             Ok(ptr) => ptr,
             Err(_) => {
                 panic!("Failed to allocate memory\n");
@@ -136,34 +140,5 @@ unsafe impl GlobalAlloc for HeapAllocator {
         if let Err(_) = heap.deallocate(ptr) {
             panic!("Failed to deallocate memory");
         }
-    }
-    
-    unsafe fn alloc_zeroed(&self, layout: core::alloc::Layout) -> *mut u8 {
-        let size = layout.size();
-        // SAFETY: the safety contract for `alloc` must be upheld by the caller.
-        let ptr = unsafe { self.alloc(layout) };
-        if !ptr.is_null() {
-            // SAFETY: as allocation succeeded, the region from `ptr`
-            // of size `size` is guaranteed to be valid for writes.
-            unsafe { core::ptr::write_bytes(ptr, 0, size) };
-        }
-        ptr
-    }
-    
-    unsafe fn realloc(&self, ptr: *mut u8, layout: core::alloc::Layout, new_size: usize) -> *mut u8 {
-        // SAFETY: the caller must ensure that the `new_size` does not overflow.
-        // `layout.align()` comes from a `Layout` and is thus guaranteed to be valid.
-        let new_layout = unsafe { core::alloc::Layout::from_size_align_unchecked(new_size, layout.align()) };
-        // SAFETY: the caller must ensure that `new_layout` is greater than zero.
-        let new_ptr = unsafe { self.alloc(new_layout) };
-        if !new_ptr.is_null() {
-            // SAFETY: the previously allocated block cannot overlap the newly allocated block.
-            // The safety contract for `dealloc` must be upheld by the caller.
-            unsafe {
-                core::ptr::copy_nonoverlapping(ptr, new_ptr, core::cmp::min(layout.size(), new_size));
-                self.dealloc(ptr, layout);
-            }
-        }
-        new_ptr
     }
 }

@@ -1,7 +1,7 @@
 use crate::{
     asm, error::KernelError, idt::{handler::set_interrupt_handler, registers::Registers}, set_index, shell, text
 };
-use layouts::{get_char, Key, QWERTY_MAP};
+use layouts::{get_char, Key, AZERTY_MAP, AZERTY_MAP_MAJ, QWERTY_MAP, QWERTY_MAP_MAJ};
 
 pub mod layouts;
 
@@ -13,6 +13,8 @@ static mut SHIFT_PRESSED: bool = false;
 static mut CTRL_PRESSED: bool = false;
 static mut CAPS_LOCK: bool = false;
 
+const LAYOUT: (&[Key; 128], &[Key; 128]) = (&AZERTY_MAP, &AZERTY_MAP_MAJ);
+
 pub fn init() -> Result<(), KernelError> {
     set_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
     Ok(())
@@ -21,9 +23,9 @@ pub fn init() -> Result<(), KernelError> {
 fn detect_layout() -> &'static [Key; 128] {
     unsafe {
         if SHIFT_PRESSED || CAPS_LOCK {
-            &layouts::QWERTY_MAP_MAJ
+            LAYOUT.1
         } else {
-            &layouts::QWERTY_MAP
+            LAYOUT.0
         }
     }
 }

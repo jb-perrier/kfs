@@ -18,34 +18,31 @@ pub fn execute() {
         let command_str = core::str::from_utf8_unchecked(command_slice);
         let mut command_iter = command_str.split_whitespace();
         let first_command = command_iter.next();
-        if command_str == "you broute me ?" {
-            text::write_str("Non je broute pas mais jb oui\n");
-        } else {
-            match first_command {
-                Some("clear") => {
-                    text::clear();
-                }
-                Some("quoi") => {
-                    text::write_str("QUOICOUBEH\n");
-                }
-                Some("ah") => {
-                    text::write_str("APAGNAN\n");
-                }
-                Some("help") => {
-                    text::write_str("Commands:\n");
-                    text::write_str("clear: Clear the screen\n");
-                    text::write_str("help: Print this help\n");
-                }
-                _ => {
-                    text::write_str("Command not found: ");
-                    text::write_str(command_str);
-                    text::write_str("\n");
-                }
+
+        match first_command {
+            Some("clear") => {
+                text::clear();
+            }
+            Some("quoi") => {
+                text::write_str("QUOICOUBEH\n");
+            }
+            Some("ah") => {
+                text::write_str("APAGNAN\n");
+            }
+            Some("help") => {
+                text::write_str("Commands:\n");
+                text::write_str("clear: Clear the screen\n");
+                text::write_str("help: Print this help\n");
+            }
+            _ => {
+                text::write_str("Command not found: ");
+                text::write_str(command_str);
+                text::write_str("\n");
             }
         }
 
-		reset();
-        
+        reset();
+
         print_shell();
     }
 }
@@ -60,7 +57,7 @@ pub fn add_char(c: char) {
         COMMAND_BUFFER[COMMAND_BUFFER_INDEX] = c as u8;
         COMMAND_BUFFER_INDEX += 1;
         COMMAND_BUFFER_LENGTH += 1;
-        
+
         text::write(c);
         text::set_cursor_pos(text::get_cursor_index());
     }
@@ -101,7 +98,7 @@ pub fn move_left() {
     unsafe {
         if COMMAND_BUFFER_INDEX > 0 {
             COMMAND_BUFFER_INDEX -= 1;
-        
+
             let index = text::get_cursor_index();
             text::set_cursor_index(index - 1);
             text::set_cursor_pos(index - 1);

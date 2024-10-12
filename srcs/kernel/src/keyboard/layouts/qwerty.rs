@@ -1,18 +1,4 @@
-
-#[derive(Clone, Copy)]
-pub enum Key {
-	None,
-	Backspace,
-	Enter,
-	Shift,
-	Ctrl,
-	CapsLock,
-	LeftArrow,
-	RightArrow,
-	UpArrow,
-	DownArrow,
-	Char(char),
-}
+use super::Key;
 
 pub const QWERTY_MAP: [Key; 128] = [
 	Key::None,
@@ -275,7 +261,3 @@ pub const QWERTY_MAP_MAJ: [Key; 128] = [
 	Key::None,
 	Key::None,
 ];
-
-pub fn get_char(layout: &[Key; 128], scancode: u8) -> Key {
-	*layout.get(scancode as usize).unwrap_or(&Key::None)
-}

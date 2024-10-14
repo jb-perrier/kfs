@@ -162,6 +162,17 @@ pub fn write_str(str: &str) {
     }
 }
 
+#[macro_export]
+macro_rules! write_format {
+    ($($arg:tt)*) => {
+        {
+            let str = format!($($arg)*);
+            $crate::text::write_str(str.as_str());
+        }
+    };
+}
+pub use write_format;
+
 pub fn write_str_with_colors(str: &str, fore_color: &Colors, back_color: &Colors) {
     for c in str.chars() {
         write_with_colors(c, fore_color, back_color);

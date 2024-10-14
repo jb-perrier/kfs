@@ -104,8 +104,7 @@ pub fn start(multiboot: usize, magic: usize) {
     text::write_num!(v[0]);
     text::write_str("\n");
 
-    let str = format!("My age is {}\n", 25);
-    text::write_str(str.as_str());
+    text::write_format!("My age is {}\n", 25);
 
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
 
@@ -114,7 +113,7 @@ pub fn start(multiboot: usize, magic: usize) {
     let first_user_page = frame_allocator.allocate().unwrap();
     user_page_directory.add_frame_as_page(first_user_page, true);
     text::write_str_with_colors("User space initialized !\n", &Colors::Green, &Colors::Black);
-    
+
     shell::print_shell();
     infinite_loop!();
 }

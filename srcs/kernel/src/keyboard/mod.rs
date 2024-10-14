@@ -55,33 +55,15 @@ fn keyboard_handler(reg: Registers) {
             }
             Key::LeftArrow => {
                 shell::move_left();
-                // let index = text::get_index();
-                // if index > 0 {
-                //     text::set_cursor_pos(index - 1);
-                //     text::set_index(index - 1);
-                // }
             }
             Key::RightArrow => {
                 shell::move_right();
-                // let index = text::get_index();
-                // if index < 80 * 24 {
-                //     text::set_cursor_pos(index + 1);
-                //     text::set_index(index + 1);
-                // }
             }
             Key::UpArrow => {
-                // let index = text::get_index();
-                // if index >= 80 {
-                //     text::set_cursor_pos(index - 80);
-                //     text::set_index(index - 80);
-                // }
+                //TODO: cmd historic
             }
             Key::DownArrow => {
-                // let index = text::get_index();
-                // if index < 80 * 24 {
-                //     text::set_cursor_pos(index + 80);
-                //     text::set_index(index + 80);
-                // }
+                //TODO: cmd historic
             }
             Key::Shift => unsafe {
                 SHIFT_PRESSED = true;

@@ -26,9 +26,6 @@ pub fn execute() {
             Some("quoi") => {
                 text::write_str("QUOICOUBEH\n");
             }
-            Some("ah") => {
-                text::write_str("APAGNAN\n");
-            }
             Some("help") => {
                 text::write_str("Commands:\n");
                 text::write_str("clear: Clear the screen\n");

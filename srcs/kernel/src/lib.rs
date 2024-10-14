@@ -28,14 +28,14 @@ pub mod time;
 mod kmain;
 
 use self::{cmos::Cmos, time::Time};
-use alloc::vec::Vec;
+use alloc::{format, vec::Vec};
 use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
 use core::{
     alloc::Layout, ffi::c_void, mem::size_of, panic::{PanicInfo, PanicMessage}
 };
 use dump::{dump, print_as_hex};
 use kernel::Kernel;
-use mem::heap::HEAP;
+use mem::{heap::HEAP, paging::directory::PageDirectory};
 use multiboot::information::MemoryType;
 use process::Process;
 use text::*;
@@ -77,7 +77,7 @@ pub fn start(multiboot: usize, magic: usize) {
     }
     asm::enable_interrupts();
 
-    let Ok((frame_allocator, page_directory)) = mem::init(&boot_info) else {
+    let Ok((mut frame_allocator, page_directory)) = mem::init(&boot_info) else {
         text::write_str_with_colors("Failed to init memory !", &Colors::Red, &Colors::Black);
         infinite_loop!();
     };
@@ -104,8 +104,17 @@ pub fn start(multiboot: usize, magic: usize) {
     text::write_num!(v[0]);
     text::write_str("\n");
 
+    let str = format!("My age is {}\n", 25);
+    text::write_str(str.as_str());
+
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
 
+    let user_page_directory = PageDirectory::new_from_frame_allocator(&mut frame_allocator, true).unwrap();
+    let user_page_directory = unsafe { &mut *user_page_directory };
+    let first_user_page = frame_allocator.allocate().unwrap();
+    user_page_directory.add_frame_as_page(first_user_page, true);
+    text::write_str_with_colors("User space initialized !\n", &Colors::Green, &Colors::Black);
+    
     shell::print_shell();
     infinite_loop!();
 }

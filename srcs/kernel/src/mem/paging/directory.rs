@@ -11,7 +11,7 @@ use crate::{
 
 use super::{
     get_page_index_from_phys_addr, get_table_entry_from_phys_addr,
-    table::{PageTable, PageTableEntryBuilder},
+    table::{PageTable, PageTableEntryBuilder}, Error,
 };
 
 #[repr(C, align(4096))]
@@ -108,7 +108,7 @@ impl PageDirectory {
         }
     }
 
-    pub fn add_new_page(&mut self, frame: *mut Frame, is_user: bool) -> Result<(), ()> {
+    pub fn add_frame_as_page(&mut self, frame: *mut Frame, is_user: bool) -> Result<(), super::Error> {
         let frame = frame as usize;
         let entry = PageDirectoryEntryBuilder::new()
             .address(frame)
@@ -129,8 +129,7 @@ impl PageDirectory {
                 }
             }
         }
-        // TODO: Out of memory (not enough space in the page directory)
-        Err(())
+        Err(Error::PageDirectoryFull)
     }
 }
 

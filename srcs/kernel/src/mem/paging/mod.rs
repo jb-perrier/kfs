@@ -14,6 +14,11 @@ use super::{
 pub mod directory;
 pub mod table;
 
+#[derive(Clone, Copy)]
+pub enum Error {
+    PageDirectoryFull,
+}
+
 pub const PAGE_SIZE: usize = 4096;
 
 pub fn init(

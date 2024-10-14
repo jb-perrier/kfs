@@ -101,12 +101,12 @@ pub fn erase() {
                     let cha = VGA_ADDR.offset((i - 1) as isize).cast_mut();
                     *cha = *VGA_ADDR.offset(i as isize);
                 }
-
-                let cha = VGA_ADDR.offset((INDEX - 1) as isize).cast_mut();
-                *cha = build_char(' ', &Colors::White, &Colors::Black);
-                CURSOR_INDEX -= 1;
-                INDEX -= 1;
             }
+
+            let cha = VGA_ADDR.offset((INDEX - 1) as isize).cast_mut();
+            *cha = build_char(' ', &Colors::White, &Colors::Black);
+            CURSOR_INDEX -= 1;
+            INDEX -= 1;
         }
     }
 }

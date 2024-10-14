@@ -4,6 +4,7 @@
 #![allow(unused)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![allow(clippy::vec_init_then_push)]
+#![allow(static_mut_refs)]
 
 extern crate alloc;
 

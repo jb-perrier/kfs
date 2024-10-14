@@ -1,4 +1,4 @@
-use crate::text;
+use crate::{asm, text};
 
 static mut COMMAND_BUFFER: [u8; 128] = [0; 128];
 static mut COMMAND_BUFFER_INDEX: usize = 0;
@@ -22,6 +22,9 @@ pub fn execute() {
         match first_command {
             Some("clear") => {
                 text::clear();
+            }
+            Some("exit") => {
+                asm::out_u16(0x604, 0x2000);
             }
             Some("quoi") => {
                 text::write_str("QUOICOUBEH\n");

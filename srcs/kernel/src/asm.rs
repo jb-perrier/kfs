@@ -6,7 +6,7 @@ use super::gdt::GdtDescriptor;
 
 #[inline]
 pub unsafe fn out_u16(port: u16, val: u16) {
-    asm!("out dx, al", in("dx") port, in("al") val as i8);
+    asm!("out dx, ax", in("dx") port, in("ax") val);
 }
 
 #[inline]
@@ -36,7 +36,6 @@ extern "C" {
     pub static _KERNEL_END: *const usize;
     pub static _KERNEL_STACK_TOP: *const c_void;
     pub static _KERNEL_STACK_BOTTOM: *const c_void;
-    pub fn shutdown();
     pub fn _disable_interrupts();
     pub fn _enable_interrupts();
     pub fn halt();

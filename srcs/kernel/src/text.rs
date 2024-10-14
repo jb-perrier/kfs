@@ -68,7 +68,6 @@ pub fn set_cursor_pos(pos: u32) {
     }
 }
 
-// Get the index of the last character written
 pub fn get_index() -> u32 {
     unsafe {
         INDEX

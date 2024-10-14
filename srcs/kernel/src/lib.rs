@@ -115,6 +115,9 @@ pub fn start(multiboot: usize, magic: usize) {
     user_page_directory.add_frame_as_page(first_user_page, true);
     text::write_str_with_colors("User space initialized !\n", &Colors::Green, &Colors::Black);
 
+    const STR_BUFFER: &str = "Dump GDT: hello this is a very nice text indeed!\n";
+    unsafe { dump(STR_BUFFER.as_ptr(), STR_BUFFER.as_ptr().add(STR_BUFFER.len())) };
+    
     shell::print_shell();
     infinite_loop!();
 }

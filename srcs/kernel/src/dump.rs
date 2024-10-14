@@ -5,7 +5,7 @@ static mut STR_BUF: [u8; 4] = [0; 4];
 pub unsafe fn dump(mut base: *const u8, limit: *const u8) {
     let mut ptr = base;
     let mut line_ptr = base;
-    while ptr.addr() < limit.addr() || (ptr.addr() - base.addr()) % 8 != 0 {
+    while ptr.addr() < limit.addr() {
         if (ptr.addr() - base.addr()) % 8 == 0 {
             print_addr_header(ptr);
         } else if (ptr.addr() - base.addr()) % 2 == 0 {
@@ -36,6 +36,7 @@ pub unsafe fn dump(mut base: *const u8, limit: *const u8) {
             line_ptr = ptr;
         }
     }
+    text::write_str("\n");
 }
 
 unsafe fn print_addr_header(ptr: *const u8) {

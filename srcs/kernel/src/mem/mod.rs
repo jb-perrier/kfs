@@ -26,7 +26,7 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     // let some space between kernel and page tables
     // for some reasons it crashes if we put the tables right after the kernel
     // something use memory just after the kernel memory but i don't know why
-    region.0 = next_aligned_from_addr(kernel_end + 1 * FRAME_SIZE, FRAME_SIZE);
+    region.0 = next_aligned_from_addr(kernel_end + FRAME_SIZE, FRAME_SIZE);
     region.1 = previous_aligned_from_addr(region.1, FRAME_SIZE);
 
     let mut frame_allocator = FrameAllocator::new(region);

@@ -54,22 +54,15 @@ pub fn remap_irq_table() {
 }
 
 #[no_mangle]
-pub extern "C" fn irq_handler(regs: Registers) {
+pub extern "C" fn irq_handler(regs: Registers, int_no: u32, err_code: u32) {
     unsafe {
-        if regs.int_no >= 40 {
+        if int_no >= 40 {
             out_u8(0xA0, 0x20);
         }
         out_u8(0x20, 0x20);
 
-        // ignore PIC signal
-        if regs.int_no != 32 {
-            // text::write_str("IRQ: ");
-            // text::write_num!(regs.int_no);
-            // text::write_str("\n");
-        }
-
-        if let Some(handler) = get_interrupt_handler(regs.int_no as usize) {
-            handler(regs);
+        if let Some(handler) = get_interrupt_handler(int_no as usize) {
+            handler(regs, int_no, err_code);
         }
     }
 }

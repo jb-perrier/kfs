@@ -111,3 +111,29 @@ fn set_entry(index: usize, base: unsafe extern "C" fn(), selector: u16, flags: u
     }
 }
 
+fn get_interrupt_name(int_no: u32, err_code: u32) -> &'static str {
+    match int_no {
+        0 => "Division by zero",
+        1 => "Debug",
+        2 => "Non-maskable interrupt",
+        3 => "Breakpoint",
+        4 => "Overflow",
+        5 => "Bound range exceeded",
+        6 => "Invalid opcode",
+        7 => "Device not available",
+        8 => "Double fault",
+        9 => "Coprocessor segment overrun",
+        10 => "Invalid TSS",
+        11 => "Segment not present",
+        12 => "Stack-segment fault",
+        13 => "General protection fault",
+        14 => "Page fault",
+        16 => "x87 FPU floating-point error",
+        17 => "Alignment check",
+        18 => "Machine check",
+        19 => "SIMD floating-point exception",
+        20 => "Virtualization exception",
+        21 => "Control protection exception",
+        _ => "Unknown interrupt",
+    }
+}

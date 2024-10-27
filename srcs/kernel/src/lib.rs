@@ -25,6 +25,7 @@ pub mod process;
 pub mod shell;
 pub mod text;
 pub mod time;
+pub mod signal;
 
 mod kmain;
 
@@ -51,16 +52,6 @@ macro_rules! infinite_loop {
 pub fn start(multiboot: usize, magic: usize) {
     disable_interrupts();
     text::clear();
-
-    text::write_str("Kernel addr: 0x");
-    text::write_num_hex!(asm::kernel_start());
-    text::write_str(" - 0x");
-    text::write_num_hex!(asm::kernel_end());
-    text::write_str("\n");
-
-    text::write_str("Kernel size: 0x");
-    text::write_num_hex!(asm::kernel_end() - asm::kernel_start());
-    text::write_str(" bytes\n");
 
     let Some(boot_info) = boot::init(magic, multiboot) else {
         text::write_str_with_colors("Failed to parse multiboot !", &Colors::Red, &Colors::Black);
@@ -105,7 +96,10 @@ pub fn start(multiboot: usize, magic: usize) {
     text::write_num!(v[0]);
     text::write_str("\n");
 
-    text::write_format!("My age is {}\n", 25);
+    let kernel_start = asm::kernel_start();
+    let kernel_end = asm::kernel_end();
+    text::write_format!("Kernel end {kernel_start:#X}\n");
+    text::write_format!("Kernel end {kernel_end:#X}\n");
 
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
 

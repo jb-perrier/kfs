@@ -165,7 +165,7 @@ pub fn write_str(str: &str) {
 macro_rules! write_format {
     ($($arg:tt)*) => {
         {
-            let str = format!($($arg)*);
+            let str = alloc::format!($($arg)*);
             $crate::text::write_str(str.as_str());
         }
     };

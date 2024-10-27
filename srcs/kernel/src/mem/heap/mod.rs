@@ -49,11 +49,11 @@ impl Heap {
     }
 
     pub fn allocate(&mut self, layout: Layout) -> Result<*mut u8, Error> {
-        text::write_str("HEAP: Allocating: ");
-        text::write_num!(layout.size());
-        text::write_str(" bytes, align: ");
-        text::write_num!(layout.align());
-        text::write_str("\n");
+        // text::write_str("HEAP: Allocating: ");
+        // text::write_num!(layout.size());
+        // text::write_str(" bytes, align: ");
+        // text::write_num!(layout.align());
+        // text::write_str("\n");
         
         let mut current = self.blocks;
         loop {
@@ -125,7 +125,6 @@ impl Heap {
 
 unsafe impl GlobalAlloc for HeapAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        text::write_str("GlobalAlloc::alloc\n");
         let heap = &mut HEAP;
         match heap.allocate(layout) {
             Ok(ptr) => ptr,

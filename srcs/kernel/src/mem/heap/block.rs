@@ -18,6 +18,12 @@ impl HeapBlock {
         let heap_addr = start as *mut HeapBlock;
         let heap = unsafe { &mut *heap_addr };
         
+        text::write_str("HeapBlock: ");
+        text::write_num!(start);
+        text::write_str(" - ");
+        text::write_num!(size);
+        text::write_str("\n");
+        
         heap.start = start;
         heap.size = size;
         heap.next = None;

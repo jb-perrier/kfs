@@ -30,7 +30,7 @@ pub unsafe extern "C" fn memset(s: *mut i32, c: i32, n: isize) -> *mut i32 {
     }
     let mut i = 0;
     while i < n {
-        *s.offset(i) = c;
+        core::ptr::write_unaligned(s, c);
         i += 1;
     }
     s
@@ -57,11 +57,13 @@ pub unsafe extern "C" fn memmove(dest: *mut u8, src: *const u8, n: isize) {
     }
     if (src as usize) < (dest as usize) {
         for i in (n - 1)..=0 {
-            *dest.offset(i) = *src.offset(i);
+            let value = core::ptr::read_unaligned(src.offset(i));
+            core::ptr::write_unaligned(dest.offset(i), value);
         }
     } else {
         for i in 0..n {
-            *dest.offset(i) = *src.offset(i);
+            let value = core::ptr::read_unaligned(src.offset(i));
+            core::ptr::write_unaligned(dest.offset(i), value);
         }
     }
 }

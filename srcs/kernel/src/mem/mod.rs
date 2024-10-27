@@ -14,6 +14,7 @@ pub mod paging;
 pub mod virtual_addr;
 
 pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory), KernelError> {
+    text::write_str("init mem\n");
     if !multiboot.has_memory_map() {
         return Err(KernelError::NoMemoryMap);
     }
@@ -23,39 +24,22 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     };
 
     let kernel_end = asm::kernel_end();
-    // let some space between kernel and page tables
-    // for some reasons it crashes if we put the tables right after the kernel
-    // something use memory just after the kernel memory but i don't know why
+    let old_start = region.0;
     region.0 = next_aligned_from_addr(kernel_end + FRAME_SIZE, FRAME_SIZE);
     region.1 = previous_aligned_from_addr(region.1, FRAME_SIZE);
-
+    text::write_str("#1\n");
     let mut frame_allocator = FrameAllocator::new(region);
-    print_regions(multiboot);
-
-    text::write_str("Kernel end: 0x");
-    text::write_num_hex!(kernel_end);
-    text::write_str("\n");
-
-    text::write_str("Frames allocation block: 0x");
-    text::write_num_hex!(region.0);
-    text::write_str(" - 0x");
-    text::write_num_hex!(region.1);
-    text::write_str("\n");
-
-    let pages_count = (region.1 - region.0) / PAGE_SIZE;
-    text::write_str("Memory available: ");
-    text::write_num!(pages_count);
-    text::write_str(" pages / ");
-    text::write_num!(pages_count * PAGE_SIZE);
-    text::write_str(" bytes\n");
+    // print_regions(multiboot);
 
     let Ok(page_directory_addr) = paging::init(&mut frame_allocator, multiboot) else {
         return Err(KernelError::Unknown);
     };
-    
+
     let inital_heap_frame = frame_allocator.allocate()?;
     unsafe { HEAP = Heap::new(inital_heap_frame as usize, FRAME_SIZE); }
 
+    // text::write_format!("GRUB region region: 0x{:x} - 0x{:x}\n", old_start, region.1);
+    // text::write_format!("Kernel_end + Aligned region: 0x{:x} - 0x{:x}\n", region.0, region.1);
     Ok((frame_allocator, page_directory_addr))
 }
 

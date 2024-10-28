@@ -1,5 +1,5 @@
 #[repr(C, packed)]
-#[derive(Clone, Copy)]
+#[derive(Default, Clone, Copy)]
 pub struct Registers {
     pub ds: u32,
     pub edi: u32,
@@ -17,4 +17,10 @@ pub struct Registers {
     // pub eflags: u32,
     // pub useresp: u32,
     // pub ss: u32,
+}
+
+impl Registers {
+    pub fn new() -> Self {
+        Default::default()
+    }
 }

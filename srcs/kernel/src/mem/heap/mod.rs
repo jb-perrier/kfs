@@ -2,7 +2,7 @@ use core::alloc::{GlobalAlloc, Layout};
 
 use block::HeapBlock;
 
-use crate::{error::KernelError, infinite_loop, text};
+use crate::{error::KernelError, infinite_loop, kernel, text};
 
 use super::frame::FrameAllocator;
 
@@ -11,8 +11,6 @@ pub use block::*;
 
 mod error;
 pub use error::*;
-
-pub static mut HEAP: Heap = Heap::empty();
 
 #[global_allocator]
 static mut HEAP_ALLOCATOR: HeapAllocator = HeapAllocator {};
@@ -125,7 +123,7 @@ impl Heap {
 
 unsafe impl GlobalAlloc for HeapAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        let heap = &mut HEAP;
+        let heap = &mut kernel().process.heap;
         match heap.allocate(layout) {
             Ok(ptr) => ptr,
             Err(_) => {
@@ -135,7 +133,7 @@ unsafe impl GlobalAlloc for HeapAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
-        let heap = &mut HEAP;
+        let heap = &mut kernel().process.heap;
         if let Err(_) = heap.deallocate(ptr) {
             panic!("Failed to deallocate memory");
         }

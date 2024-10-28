@@ -28,14 +28,18 @@ impl FrameAllocator {
         }
     }
 
-    pub fn allocate(&mut self) -> Result<*mut Frame, KernelError> {
-        if self.next_free + FRAME_SIZE > self.memory_block.1 {
+    pub fn allocate_many(&mut self, count: usize) -> Result<*mut Frame, KernelError> {
+        if self.next_free + FRAME_SIZE * count > self.memory_block.1 {
             return Err(KernelError::FrameOutOfMemory);
         }
         let frame = self.next_free;
-        self.next_free += FRAME_SIZE;
+        self.next_free += FRAME_SIZE * count;
 
         Ok(frame as *mut Frame)
+    }
+
+    pub fn allocate(&mut self) -> Result<*mut Frame, KernelError> {
+        self.allocate_many(1)
     }
 
     pub fn allocate_zeroed(&mut self) -> Result<*mut Frame, KernelError> {

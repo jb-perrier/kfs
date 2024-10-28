@@ -43,11 +43,28 @@ extern "C" {
     pub fn _check_gdt() -> u32;
     pub fn _enable_paging();
     pub fn _set_page_directory(page_directory: *mut PageDirectory);
-    pub fn get_stack_top() -> *const u32;
-    pub fn get_stack_bottom() -> *const u32;
-    pub fn get_stack_ptr() -> *const u32;
+    pub fn _get_stack_top() -> *const u32;
+    pub fn _get_stack_bottom() -> *const u32;
+    pub fn _get_stack_ptr() -> *const u32;
     pub fn _idt_flush(idt: usize);
     pub fn _divide_zero();
+    pub fn _clean_registers();
+}
+
+pub fn clean_registers() {
+    unsafe { _clean_registers(); }
+}
+
+pub fn get_stack_top() -> *const u32 {
+    unsafe { _get_stack_top() }
+}
+
+pub fn get_stack_bottom() -> *const u32 {
+    unsafe { _get_stack_bottom() }
+}
+
+pub fn get_stack_ptr() -> *const u32 {
+    unsafe { _get_stack_ptr() }
 }
 
 pub fn divide_zero() {

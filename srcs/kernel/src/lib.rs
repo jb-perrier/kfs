@@ -1,6 +1,5 @@
 #![no_std]
 #![no_main]
-#![feature(strict_provenance)]
 #![allow(unused)]
 #![allow(clippy::not_unsafe_ptr_arg_deref)]
 #![allow(clippy::vec_init_then_push)]
@@ -36,8 +35,8 @@ use core::{
     alloc::Layout, ffi::c_void, mem::size_of, panic::{PanicInfo, PanicMessage}
 };
 use dump::{dump, print_as_hex};
-use kernel::Kernel;
-use mem::{heap::HEAP, paging::directory::PageDirectory};
+use kernel::{set_kernel, kernel, Kernel};
+use mem::{frame::{self, FRAME_SIZE}, heap::{self}, paging::directory::PageDirectory};
 use multiboot::information::MemoryType;
 use process::Process;
 use text::*;
@@ -69,27 +68,40 @@ pub fn start(multiboot: usize, magic: usize) {
     }
     asm::enable_interrupts();
 
-    let Ok((mut frame_allocator, page_directory)) = mem::init(&boot_info) else {
+    let Ok((mut frame_allocator, page_directory, heap)) = mem::init(&boot_info) else {
         text::write_str_with_colors("Failed to init memory !", &Colors::Red, &Colors::Black);
         infinite_loop!();
     };
+
+    set_kernel(Kernel {
+        frame_allocator,
+        process: Process::new(page_directory, heap),
+    });
 
     if let Err(_) = keyboard::init() {
         text::write_str_with_colors("Failed to init keyboard !", &Colors::Red, &Colors::Black);
         infinite_loop!();
     }
 
-    unsafe {
-        let number = 0_u64;
-        let heap_alloc = HEAP.allocate(Layout::for_value(&number)).unwrap();
-        text::write_str("Alloc addr: 0x");
-        text::write_num_hex!(heap_alloc as usize);
-        text::write_str(" size: ");
-        text::write_num!(HEAP.get_size(heap_alloc).unwrap());
-        text::write_str("\n");
+    const FRAME_COUNT: usize = 16;
+    let Ok(block) = kernel().frame_allocator.allocate_many(FRAME_COUNT) else {
+        text::write_str_with_colors("Failed to allocate blocks !", &Colors::Red, &Colors::Black);
+        infinite_loop!();
+    };
 
-        HEAP.deallocate(heap_alloc);
-    }
+    let heap = &mut kernel().process.heap;
+    heap.add_block(block.addr(), FRAME_COUNT * FRAME_SIZE);
+
+    let number = 0_u64;
+    let heap_alloc = heap.allocate(Layout::for_value(&number)).unwrap();
+    text::write_str("Alloc addr: 0x");
+    text::write_num_hex!(heap_alloc as usize);
+    text::write_str(" size: ");
+    text::write_num!(heap.get_size(heap_alloc).unwrap());
+    text::write_str("\n");
+
+    heap.deallocate(heap_alloc);
+
     let mut v: Vec<isize> = Vec::with_capacity(5);
     v.push(56);
     text::write_str("Value in vec: ");
@@ -103,7 +115,8 @@ pub fn start(multiboot: usize, magic: usize) {
 
     text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
 
-    let user_page_directory = PageDirectory::new_from_frame_allocator(&mut frame_allocator, true).unwrap();
+    let frame_allocator = &mut kernel().frame_allocator;
+    let user_page_directory = PageDirectory::new_from_frame_allocator(frame_allocator, true).unwrap();
     let user_page_directory = unsafe { &mut *user_page_directory };
     let first_user_page = frame_allocator.allocate().unwrap();
     user_page_directory.add_frame_as_page(first_user_page, true);

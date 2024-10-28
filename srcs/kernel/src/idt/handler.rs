@@ -13,15 +13,21 @@ static mut INTERRUPT_HANDLERS: [InterruptHandler; 256] = [unhandled_interrupt; 2
 
 pub fn fatal_handler(regs: Registers, int_no: u32, err_code: u32) {
     text::write_str("Fatal interrupt: ");
-    text::write_str(get_interrupt_name(int_no, err_code));
+    match get_interrupt_name(int_no, err_code) {
+        Some(name) => text::write_str(name),
+        None => text::write_num!(int_no),
+    }
     text::write_str("\n");
     infinite_loop!();
 }
 
 pub fn unhandled_interrupt(regs: Registers, int_no: u32, err_code: u32) {
-    // text::write_str("Unhandled interrupt: ");
-    // text::write_str(get_interrupt_name(int_no, err_code));
-    // text::write_str("\n");
+    text::write_str("Unhandled interrupt: ");
+    match get_interrupt_name(int_no, err_code) {
+        Some(name) => text::write_str(name),
+        None => text::write_num!(int_no),
+    }
+    text::write_str("\n");
     // infinite_loop!();
 }
 

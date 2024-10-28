@@ -16,3 +16,5 @@ panic = "abort"
 [dependencies]
 multiboot = "0.8.0"
 
+[toolchain]
+channel = "nightly"

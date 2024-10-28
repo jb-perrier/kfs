@@ -1,3 +1,5 @@
+use crate::{asm, mem::heap::{self, Heap}};
+
 use super::text;
 
 static mut STR_BUF: [u8; 4] = [0; 4];
@@ -60,5 +62,21 @@ pub unsafe fn print_as_hex(mut value: usize, max_width: usize) {
 
     for j in (8 - max_width)..8 {
         text::write_str(core::str::from_utf8(&[HEX_BUF[j]]).unwrap());
+    }
+}
+
+pub fn save_kernel_stack(heap: &mut Heap) -> Result<*mut u8, heap::Error> {
+    unsafe {
+        let stack_top = asm::get_stack_top();
+        let stack_bottom = asm::get_stack_bottom();
+        let stack_ptr = asm::get_stack_ptr();
+        let stack_size = stack_bottom.addr() - stack_top.addr();
+
+        text::write_format!("Saving kernel stack !\n");
+        text::write_format!("Stack size: 0x{:x}\n", stack_size);
+        let layout = core::alloc::Layout::from_size_align(stack_size as usize, 16).unwrap();
+        let saved_stack = heap.allocate(layout)?;
+        core::ptr::copy(stack_bottom as *const u8, saved_stack, stack_size as usize);
+        Ok(saved_stack)
     }
 }

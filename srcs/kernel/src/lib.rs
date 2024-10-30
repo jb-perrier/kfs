@@ -27,6 +27,7 @@ pub mod text;
 pub mod time;
 pub mod debug;
 pub mod user_api;
+// pub mod vga_wip;
 
 mod kmain;
 
@@ -35,7 +36,7 @@ use alloc::{boxed::Box, format, vec::Vec};
 use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
 use debug::{disable_debug, enable_debug, set_debug_log, set_tracing};
 use idt::handler::set_interrupt_handler;
-use shell::style::{parse_style_in_str, style};
+use shell::{style::{parse_style_in_str, style}};
 use core::{
     alloc::Layout,
     ffi::c_void,
@@ -90,7 +91,7 @@ pub fn start(multiboot: usize, magic: usize) {
         process: Process::new(page_directory, heap, 0),
         scheduler: Scheduler::new(),
         processes: Vec::new(),
-        debug_log: true,
+        // shell: Shell::new(),
     });
 
 
@@ -126,8 +127,6 @@ pub fn start(multiboot: usize, magic: usize) {
     }
     
     kernel().process.signal_callback = Some(Box::new(|sig| {
-        text::write_str("Debug4\n");
-        enable_debug();
         match sig {
             signal::Signal::Echo(msg) => {
                 text::write_format!("Echo received: {}\n", msg);
@@ -136,7 +135,6 @@ pub fn start(multiboot: usize, magic: usize) {
                 text::write_format!("Signal received: {:?}\n", sig);
             }
         }
-        disable_debug();
     }));
     shell::print_shell();
     infinite_loop!();

@@ -53,10 +53,7 @@ pub fn execute() -> Result<(), ShellError> {
                 if let Some(sub_cmd) = args.first().copied() {
                     if sub_cmd == "echo" {
                         let msg = args.get(1).copied().ok_or(ShellError::InvalidCommand)?;
-                        text::write_str("Debug\n");
                         kernel().process.push_signal(Signal::Echo(msg.to_string()));
-                        text::write_str("Debug2\n");
-
                     }
                     kernel().process.execute_signals();
                 }
@@ -193,3 +190,6 @@ pub fn move_right() {
         }
     }
 }
+
+
+

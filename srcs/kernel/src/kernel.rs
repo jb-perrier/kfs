@@ -5,12 +5,15 @@ use multiboot::information::Multiboot;
 
 use crate::{infinite_loop, mem::{frame::FrameAllocator, heap::Heap}, process::{scheduler::Scheduler, Process}, text};
 
+/**
+ * All these fields CANNOT use the heap in order to initialize themselves because HeapAllocator use kernel()
+ */
 pub struct Kernel {
     pub frame_allocator: FrameAllocator,
     pub process: Process,
     pub processes:  Vec<Process>,
     pub scheduler: Scheduler,
-    pub debug_log: bool,
+    // pub shell: Shell
 }
 
 impl Kernel {

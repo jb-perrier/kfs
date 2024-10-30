@@ -57,7 +57,6 @@ impl Heap {
             text::write_str("\n");
         }
         
-        
         let mut current = self.blocks;
         loop {
             let block = unsafe { &mut *current };

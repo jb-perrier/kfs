@@ -28,7 +28,9 @@ pub unsafe fn dump(mut base: *const u8, limit: *const u8) {
             while ptr.addr() < save_ptr.addr() && ptr.addr() < limit.addr() {
                 let c = *ptr as char;
                 if c.is_ascii_graphic() {
-                    text::write_str(core::str::from_utf8(&[*ptr]).unwrap());
+                    // raw memory is not always a valid utf8 char
+                    // so print the char as is
+                    text::write(c);
                 } else {
                     text::write_str(".");
                 }
@@ -65,18 +67,16 @@ pub unsafe fn print_as_hex(mut value: usize, max_width: usize) {
     }
 }
 
-pub fn save_kernel_stack(heap: &mut Heap) -> Result<*mut u8, heap::Error> {
+pub fn save_kernel_stack(heap: &mut Heap) -> Result<(*mut u8, usize), heap::Error> {
     unsafe {
         let stack_top = asm::get_stack_top();
         let stack_bottom = asm::get_stack_bottom();
         let stack_ptr = asm::get_stack_ptr();
-        let stack_size = stack_bottom.addr() - stack_top.addr();
+        let stack_size = stack_top.addr() - stack_bottom.addr();
 
-        text::write_format!("Saving kernel stack !\n");
-        text::write_format!("Stack size: 0x{:x}\n", stack_size);
         let layout = core::alloc::Layout::from_size_align(stack_size as usize, 16).unwrap();
         let saved_stack = heap.allocate(layout)?;
-        core::ptr::copy(stack_bottom as *const u8, saved_stack, stack_size as usize);
-        Ok(saved_stack)
+        core::ptr::copy_nonoverlapping(stack_bottom, saved_stack, stack_size as usize);
+        Ok((saved_stack, stack_size))
     }
 }

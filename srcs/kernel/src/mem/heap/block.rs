@@ -1,6 +1,6 @@
 use core::{alloc::Layout, mem::size_of};
 
-use crate::{infinite_loop, mem::next_aligned_from_addr, text};
+use crate::{infinite_loop, mem::next_aligned_from_addr, text, trace};
 
 const HEAP_SUB_BLOCK_SIZE: usize = 16;
 
@@ -14,16 +14,10 @@ pub struct HeapBlock {
 
 impl HeapBlock {
     // start and end should be aligned on 16 bytes
-    pub fn new(start: usize, size: usize) -> *mut HeapBlock {        
+    pub fn new(start: usize, size: usize) -> *mut HeapBlock {
         let heap_addr = start as *mut HeapBlock;
         let heap = unsafe { &mut *heap_addr };
-        
-        text::write_str("HeapBlock: ");
-        text::write_num!(start);
-        text::write_str(" - ");
-        text::write_num!(size);
-        text::write_str("\n");
-        
+
         heap.start = start;
         heap.size = size;
         heap.next = None;
@@ -55,19 +49,26 @@ impl HeapBlock {
     }
 
     pub fn allocate(&mut self, layout: Layout) -> Result<*mut u8, super::Error> {
+        trace!();
         if self.alloc_count == 255 {
             return Err(super::Error::OutOfMemory);
         }
         let size_in_bitmap = size_in_bitmap(layout.size());
-        let hole = self.find_hole(size_in_bitmap, layout.align()).ok_or(super::Error::OutOfMemory)?;
+        let hole = self
+            .find_hole(size_in_bitmap, layout.align())
+            .ok_or(super::Error::OutOfMemory)?;
         let uid = self.find_free_uid().ok_or(super::Error::OutOfMemory)?;
         self.allocate_in_bitmap(hole, size_in_bitmap, uid);
         let addr = self.data_start() + hole * HEAP_SUB_BLOCK_SIZE;
         self.alloc_count += 1;
+
+        assert_eq!(addr % layout.align(), 0);
+        assert_ne!(addr, 0);
         Ok(addr as *mut u8)
     }
 
     pub fn deallocate(&mut self, addr: *mut u8) -> Result<(), super::Error> {
+        trace!();
         if !self.is_allocated(addr) {
             return Err(super::Error::Unallocated);
         }
@@ -87,8 +88,23 @@ impl HeapBlock {
         unsafe { core::ptr::read((bitmap_start + hole) as *const u8) != 0 }
     }
 
-    pub fn get_size(&self, addr: *mut u8) -> Result<usize, super::Error> {
-        let uid = self.get_uid_from_ptr(addr).ok_or(super::Error::Unallocated)?;
+    pub fn get_free_size(&self) -> usize {
+        let mut size = 0;
+        for i in 0..self.bitmap_size() {
+            let bitmap_value = self.get_bitmap_value(i).unwrap();
+            if bitmap_value == 0 {
+                size += 1;
+            } else if size > 0 {
+                break;
+            }
+        }
+        size * HEAP_SUB_BLOCK_SIZE
+    }
+    
+    pub fn get_size_from_ptr(&self, addr: *mut u8) -> Result<usize, super::Error> {
+        let uid = self
+            .get_uid_from_ptr(addr)
+            .ok_or(super::Error::Unallocated)?;
         self.get_size_from_uid(uid).ok_or(super::Error::Unallocated)
     }
 
@@ -142,9 +158,13 @@ impl HeapBlock {
     }
 
     fn deallocate_in_bitmap(&self, mut index: usize) -> Result<(), super::Error> {
-        let alloc_uid = self.get_bitmap_value(index).ok_or(super::Error::Unallocated)?;
+        let alloc_uid = self
+            .get_bitmap_value(index)
+            .ok_or(super::Error::Unallocated)?;
         while index < self.bitmap_size() {
-            let uid = self.get_bitmap_value(index).ok_or(super::Error::Unallocated)?;
+            let uid = self
+                .get_bitmap_value(index)
+                .ok_or(super::Error::Unallocated)?;
             if uid != alloc_uid {
                 break;
             }
@@ -233,7 +253,9 @@ impl HeapBlock {
 fn size_in_bitmap(size: usize) -> usize {
     if size < HEAP_SUB_BLOCK_SIZE {
         1
-    } else {
+    } else if size % 16 == 0 {
         size / HEAP_SUB_BLOCK_SIZE
+    } else {
+        size / HEAP_SUB_BLOCK_SIZE + 1
     }
 }

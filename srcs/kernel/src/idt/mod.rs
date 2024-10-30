@@ -2,7 +2,7 @@ use handler::set_interrupt_handler;
 use irq::*;
 use isr::*;
 
-use crate::{asm, error::KernelError, text};
+use crate::{asm, error::KernelError, kernel::kernel, text};
 
 pub mod handler;
 pub mod irq;
@@ -101,7 +101,7 @@ pub fn init() -> Result<(), KernelError> {
     set_entry(47, _irq15 , 0x08, FLAG_INTERRUPT_GATE);
 
     asm::idt_flush(&raw const IDT_POINTER);
-    
+
     set_interrupt_handler(32, |regs, int_no, err| {
         // keep time interrupt silent
         // will be used for process scheduling

@@ -2,7 +2,7 @@ use core::alloc::{GlobalAlloc, Layout};
 
 use block::HeapBlock;
 
-use crate::{error::KernelError, infinite_loop, kernel, text};
+use crate::{debug, error::KernelError, infinite_loop, kernel, text, trace};
 
 use super::frame::FrameAllocator;
 
@@ -46,12 +46,17 @@ impl Heap {
         }
     }
 
-    pub fn allocate(&mut self, layout: Layout) -> Result<*mut u8, Error> {
-        // text::write_str("HEAP: Allocating: ");
-        // text::write_num!(layout.size());
-        // text::write_str(" bytes, align: ");
-        // text::write_num!(layout.align());
-        // text::write_str("\n");
+    pub fn allocate(&mut self, mut layout: Layout) -> Result<*mut u8, Error> {
+        trace!();
+
+        debug! {
+            text::write_str("Allocating: ");
+            text::write_num!(layout.size());
+            text::write_str(" bytes, align: ");
+            text::write_num!(layout.align());
+            text::write_str("\n");
+        }
+        
         
         let mut current = self.blocks;
         loop {
@@ -71,6 +76,13 @@ impl Heap {
     }
 
     pub fn deallocate(&mut self, ptr: *mut u8) -> Result<(), Error> {
+        trace!();
+        debug! {
+            text::write_str("Deallocating size: ");
+            text::write_num!(self.get_size_from_ptr(ptr).unwrap());
+            text::write_str("\n");
+        }
+        
         let mut current = self.blocks;
         loop {
             let block = unsafe { &mut *current };
@@ -104,11 +116,11 @@ impl Heap {
         false
     }
 
-    pub fn get_size(&self, ptr: *mut u8) -> Result<usize, Error> {
+    pub fn get_size_from_ptr(&self, ptr: *mut u8) -> Result<usize, Error> {
         let mut current = self.blocks;
         loop {
             let block = unsafe { &*current };
-            if let Ok(size) = block.get_size(ptr) {
+            if let Ok(size) = block.get_size_from_ptr(ptr) {
                 return Ok(size);
             }
             if let Some(next) = block.next() {
@@ -118,6 +130,21 @@ impl Heap {
             }
         }
         Err(Error::Unallocated)
+    }
+
+    pub fn get_free_size(&self) -> usize {
+        let mut current = self.blocks;
+        let mut size = 0;
+        loop {
+            let block = unsafe { &*current };
+            size += block.get_free_size();
+            if let Some(next) = block.next() {
+                current = next;
+            } else {
+                break;
+            }
+        }
+        size
     }
 }
 

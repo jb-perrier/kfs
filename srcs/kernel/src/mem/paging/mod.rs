@@ -42,19 +42,6 @@ pub fn init(
     unsafe { (*addr).identity(); }
     asm::set_page_directory(addr);
     asm::enable_paging();
-    
-    text::write_str_with_colors(
-        "Pagination initialized !",
-        &text::Colors::Green,
-        &text::Colors::Black,
-    );
-
-    text::write_str_with_colors(
-        " Kernel virtual space mapped as identity\n",
-        &text::Colors::DarkGray,
-        &text::Colors::Black,
-    );
-    let addr = 0 as *mut PageDirectory;
     Ok(addr)
 }
 

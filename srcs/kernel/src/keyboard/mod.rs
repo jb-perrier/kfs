@@ -13,11 +13,24 @@ static mut SHIFT_PRESSED: bool = false;
 static mut CTRL_PRESSED: bool = false;
 static mut CAPS_LOCK: bool = false;
 
-const LAYOUT: (&[Key; 128], &[Key; 128]) = (&AZERTY_MAP, &AZERTY_MAP_MAJ);
+static mut LAYOUT: (&[Key; 128], &[Key; 128]) = (&AZERTY_MAP, &AZERTY_MAP_MAJ);
+// static mut LAYOUT: (&[Key; 128], &[Key; 128]) = (&QWERTY_MAP, &QWERTY_MAP_MAJ);
 
 pub fn init() -> Result<(), KernelError> {
     set_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
     Ok(())
+}
+
+pub fn set_azerty() {
+    unsafe {
+        LAYOUT = (&AZERTY_MAP, &AZERTY_MAP_MAJ);
+    }
+}
+
+pub fn set_qwerty() {
+    unsafe {
+        LAYOUT = (&QWERTY_MAP, &QWERTY_MAP_MAJ);
+    }
 }
 
 fn detect_layout() -> &'static [Key; 128] {

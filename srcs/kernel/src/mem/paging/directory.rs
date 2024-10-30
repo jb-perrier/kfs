@@ -46,9 +46,7 @@ impl PageDirectory {
                 .build();
             count += 1;
         }
-        text::write_str("Allocating ");
-        text::write_num_hex!(count);
-        text::write_str(" frames\n");
+
         Ok(page_directory_addr)
     }
     #[allow(clippy::never_loop)]

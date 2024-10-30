@@ -5,7 +5,7 @@ use multiboot::information::{MemoryType, Multiboot};
 use paging::{directory::PageDirectory, PAGE_SIZE};
 
 use crate::{
-    asm, error::KernelError, infinite_loop, kernel::{self, Kernel}, text
+    asm, debug::print_from_process, error::KernelError, infinite_loop, kernel::{self, Kernel}, text, Colors
 };
 
 pub mod frame;
@@ -14,7 +14,6 @@ pub mod paging;
 pub mod virtual_addr;
 
 pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory, Heap), KernelError> {
-    text::write_str("init mem\n");
     if !multiboot.has_memory_map() {
         return Err(KernelError::NoMemoryMap);
     }
@@ -27,7 +26,7 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
     let old_start = region.0;
     region.0 = next_aligned_from_addr(kernel_end + FRAME_SIZE, FRAME_SIZE);
     region.1 = previous_aligned_from_addr(region.1, FRAME_SIZE);
-    text::write_str("#1\n");
+
     let mut frame_allocator = FrameAllocator::new(region);
     // print_regions(multiboot);
 
@@ -35,11 +34,13 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
         return Err(KernelError::Unknown);
     };
 
-    let inital_heap_frame = frame_allocator.allocate()?;
-    let heap = Heap::new(inital_heap_frame as usize, FRAME_SIZE);
+    const FRAME_COUNT: usize = 16;
+    let Ok(block) = frame_allocator.allocate_many(FRAME_COUNT) else {
+        text::write_str_with_colors("Failed to allocate blocks !", Colors::Red, Colors::Black);
+        infinite_loop!();
+    };
 
-    // text::write_format!("GRUB region region: 0x{:x} - 0x{:x}\n", old_start, region.1);
-    // text::write_format!("Kernel_end + Aligned region: 0x{:x} - 0x{:x}\n", region.0, region.1);
+    let heap = Heap::new(block as usize, FRAME_COUNT * FRAME_SIZE);
     Ok((frame_allocator, page_directory_addr, heap))
 }
 

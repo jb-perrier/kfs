@@ -55,16 +55,16 @@ pub fn clean_registers() {
     unsafe { _clean_registers(); }
 }
 
-pub fn get_stack_top() -> *const u32 {
-    unsafe { _get_stack_top() }
+pub fn get_stack_top() -> *const u8 {
+    unsafe { _get_stack_top() as *const u8 }
 }
 
-pub fn get_stack_bottom() -> *const u32 {
-    unsafe { _get_stack_bottom() }
+pub fn get_stack_bottom() -> *const u8 {
+    unsafe { _get_stack_bottom() as *const u8 }
 }
 
-pub fn get_stack_ptr() -> *const u32 {
-    unsafe { _get_stack_ptr() }
+pub fn get_stack_ptr() -> *const u8 {
+    unsafe { _get_stack_ptr() as *const u8 }
 }
 
 pub fn divide_zero() {

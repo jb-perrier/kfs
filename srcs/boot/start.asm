@@ -25,18 +25,18 @@ stack_top:
  
 section .text
 
-global get_stack_top
-get_stack_top:
+global _get_stack_top
+_get_stack_top:
 	mov eax, stack_top
 	ret
 
-global get_stack_bottom
-get_stack_bottom:
+global _get_stack_bottom
+_get_stack_bottom:
 	mov eax, stack_bottom
 	ret
 
-global get_stack_ptr
-get_stack_ptr:
+global _get_stack_ptr
+_get_stack_ptr:
 	mov eax, esp
 	ret
 

@@ -10,7 +10,7 @@ static mut CURSOR_POS: u32 = 0;
 static mut CURSOR_INDEX: u32 = 0;
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Default, Copy, Clone)]
 pub enum Colors {
     Black = 0,
     Blue = 1,
@@ -27,7 +27,53 @@ pub enum Colors {
     LightRed = 12,
     LightPurple = 13,
     Yellow = 14,
-    White = 15,
+    #[default]White = 15,
+}
+
+impl Colors {
+    pub fn from_str(s: &str) -> Colors {
+        match s {
+            "Black" => Colors::Black,
+            "Blue" => Colors::Blue,
+            "Green" => Colors::Green,
+            "Cyan" => Colors::Cyan,
+            "Red" => Colors::Red,
+            "Purple" => Colors::Purple,
+            "Brown" => Colors::Brown,
+            "Gray" => Colors::Gray,
+            "DarkGray" => Colors::DarkGray,
+            "LightBlue" => Colors::LightBlue,
+            "LightGreen" => Colors::LightGreen,
+            "LightCyan" => Colors::LightCyan,
+            "LightRed" => Colors::LightRed,
+            "LightPurple" => Colors::LightPurple,
+            "Yellow" => Colors::Yellow,
+            "White" => Colors::White,
+            _ => Colors::White,
+        }
+    }
+
+    pub fn from_u32(u: u32) -> Colors {
+        match u {
+            0 => Colors::Black,
+            1 => Colors::Blue,
+            2 => Colors::Green,
+            3 => Colors::Cyan,
+            4 => Colors::Red,
+            5 => Colors::Purple,
+            6 => Colors::Brown,
+            7 => Colors::Gray,
+            8 => Colors::DarkGray,
+            9 => Colors::LightBlue,
+            10 => Colors::LightGreen,
+            11 => Colors::LightCyan,
+            12 => Colors::LightRed,
+            13 => Colors::LightPurple,
+            14 => Colors::Yellow,
+            15 => Colors::White,
+            _ => Colors::White,
+        }
+    }
 }
 
 pub fn init() {
@@ -41,7 +87,7 @@ pub fn clear() {
         let mut i = 0;
         while i < VGA_BUFFER_SIZE  {
             let cha = VGA_ADDR.offset(i as isize).cast_mut();
-            *cha = build_char(' ', &Colors::White, &Colors::Black);
+            *cha = build_char(' ', Colors::White, Colors::Black);
             i += 1;
         }
         INDEX = 0;
@@ -49,13 +95,13 @@ pub fn clear() {
     }
 }
 
-fn build_char(c: char, fore_color: &Colors, back_color: &Colors) -> u16 {
-    let attrib = (((*back_color as u8) << 4) | ((*fore_color as u8) & 0x0F)) as u16;
+fn build_char(c: char, fore_color: Colors, back_color: Colors) -> u16 {
+    let attrib = (((back_color as u8) << 4) | ((fore_color as u8) & 0x0F)) as u16;
     c as u16 | (attrib << 8)
 }
 
 pub fn write(c: char) {
-    write_with_colors(c, &Colors::White, &Colors::Black);
+    write_with_colors(c, Colors::White, Colors::Black);
 }
 
 pub fn set_cursor_pos(pos: u32) {
@@ -103,14 +149,14 @@ pub fn erase() {
             }
 
             let cha = VGA_ADDR.offset((INDEX - 1) as isize).cast_mut();
-            *cha = build_char(' ', &Colors::White, &Colors::Black);
+            *cha = build_char(' ', Colors::White, Colors::Black);
             CURSOR_INDEX -= 1;
             INDEX -= 1;
         }
     }
 }
 
-pub fn write_with_colors(c: char, fore_color: &Colors, back_color: &Colors) {
+pub fn write_with_colors(c: char, fore_color: Colors, back_color: Colors) {
     unsafe {
         if INDEX >= VGA_BUFFER_SIZE {
             // Move all lines up
@@ -172,7 +218,7 @@ macro_rules! write_format {
 }
 pub use write_format;
 
-pub fn write_str_with_colors(str: &str, fore_color: &Colors, back_color: &Colors) {
+pub fn write_str_with_colors(str: &str, fore_color: Colors, back_color: Colors) {
     for c in str.chars() {
         write_with_colors(c, fore_color, back_color);
     }

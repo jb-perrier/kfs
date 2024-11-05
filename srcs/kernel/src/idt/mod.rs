@@ -2,7 +2,13 @@ use handler::set_interrupt_handler;
 use irq::*;
 use isr::*;
 
-use crate::{asm, error::KernelError, kernel::kernel, text};
+use crate::{
+    asm,
+    error::KernelError,
+    kernel::{kernel, kernel_option},
+    process::ProcessState,
+    text,
+};
 
 pub mod handler;
 pub mod irq;
@@ -49,62 +55,125 @@ pub fn init() -> Result<(), KernelError> {
     }
 
     remap_irq_table();
-    
+
     set_entry(0, _isr0, 0x08, FLAG_INTERRUPT_GATE);
     set_entry(1, _isr1, 0x08, FLAG_INTERRUPT_GATE);
     set_entry(2, _isr2, 0x08, FLAG_INTERRUPT_GATE);
     set_entry(3, _isr3, 0x08, FLAG_INTERRUPT_GATE);
     set_entry(4, _isr4, 0x08, FLAG_INTERRUPT_GATE);
     set_entry(5, _isr5, 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(6, _isr6 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(7, _isr7 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(8, _isr8 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(9, _isr9 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(10, _isr10 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(11, _isr11 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(12, _isr12 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(13, _isr13 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(14, _isr14 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(15, _isr15 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(16, _isr16 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(17, _isr17 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(18, _isr18 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(19, _isr19 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(20, _isr20 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(21, _isr21 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(22, _isr22 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(23, _isr23 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(24, _isr24 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(25, _isr25 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(26, _isr26 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(27, _isr27 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(28, _isr28 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(29, _isr29 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(30, _isr30 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(31, _isr31 , 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(6, _isr6, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(7, _isr7, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(8, _isr8, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(9, _isr9, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(10, _isr10, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(11, _isr11, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(12, _isr12, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(13, _isr13, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(14, _isr14, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(15, _isr15, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(16, _isr16, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(17, _isr17, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(18, _isr18, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(19, _isr19, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(20, _isr20, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(21, _isr21, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(22, _isr22, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(23, _isr23, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(24, _isr24, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(25, _isr25, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(26, _isr26, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(27, _isr27, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(28, _isr28, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(29, _isr29, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(30, _isr30, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(31, _isr31, 0x08, FLAG_INTERRUPT_GATE);
 
-    set_entry(32, _irq0 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(33, _irq1 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(34, _irq2 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(35, _irq3 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(36, _irq4 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(37, _irq5 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(38, _irq6 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(39, _irq7 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(40, _irq8 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(41, _irq9 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(42, _irq10 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(43, _irq11 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(44, _irq12 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(45, _irq13 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(46, _irq14 , 0x08, FLAG_INTERRUPT_GATE);
-    set_entry(47, _irq15 , 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(32, _irq0, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(33, _irq1, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(34, _irq2, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(35, _irq3, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(36, _irq4, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(37, _irq5, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(38, _irq6, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(39, _irq7, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(40, _irq8, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(41, _irq9, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(42, _irq10, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(43, _irq11, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(44, _irq12, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(45, _irq13, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(46, _irq14, 0x08, FLAG_INTERRUPT_GATE);
+    set_entry(47, _irq15, 0x08, FLAG_INTERRUPT_GATE);
 
     asm::idt_flush(&raw const IDT_POINTER);
 
-    set_interrupt_handler(32, |regs, int_no, err| {
-        // keep time interrupt silent
-        // will be used for process scheduling
+    set_interrupt_handler(32, |regs| {
+        if kernel_option().is_none() {
+            return 0;
+        }
+        if !kernel().scheduler.running {
+            return 0;
+        }
+        let Some(current_process) = kernel().get_current_process() else {
+            return 0;
+        };
+
+        {
+            // text::write_format!("HandlerRegisters: {:#?}\n", regs);
+            let eip = regs.interrupt.eip;
+            // text::write_format!("EIP: {:#x}\n", eip);
+        }
+        // text::write_str("Switching task, old esp: ");
+        // text::write_num_hex!(regs.esp);
+        // text::write_str("\n");
+        current_process.stack_ptr = regs.esp as usize as *mut u8;
+
+        let Some(next_process) = kernel().get_next_scheduled_process() else {
+            return 0;
+        };
+
+        if next_process.state == ProcessState::Start {
+            next_process.state = ProcessState::Running;
+            text::write_format!("Starting process: {}\n", next_process.pid);
+            let eip = next_process.func as *const () as u32;
+            let eflags = 0x202;
+            let ebp = next_process.stack_top.addr() as u32;
+            let esp = next_process.stack_top.addr() as u32;
+            asm::jump_in_new_process(esp, ebp, eip, eflags);
+        }
+
+        // if next_process.pid == current_process.pid {
+        //     return 0;
+        // }
+
+        if next_process.state == ProcessState::Running {
+            // text::write_str("New esp: ");
+            // text::write_num_hex!(next_process.stack_ptr.addr() as u32);
+            // text::write_str("\n");
+            // text::write_format!("Swithing from {} to {}\n", current_process.pid, next_process.pid);
+            // unsafe {
+            //     let esp = next_process.stack_ptr.addr() as u32;
+            //     // core::arch::asm! {
+            //     //     "mov esp, {0}",
+            //     //     "add esp, 4",
+            //     //     "popad",
+            //     //     "add esp, 8",
+            //     //     "sti",
+            //     //     "iret",
+            //     //     in(reg) esp,
+            //     //     options(noreturn),
+            //     // }
+            //     return esp;
+            // }
+
+            let old_esp = regs.esp;
+            // text::write_format!("ESP saved: {:#x}", old_esp);
+            let new_esp = next_process.stack_ptr.addr() as u32;
+            // text::write_format!(" restored: {:#x}\n", new_esp);
+            return new_esp;
+        }
+        0
     });
     Ok(())
 }

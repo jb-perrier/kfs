@@ -1,24 +1,18 @@
 extern isr_handler
 
 isr_common_stub:
-    pusha
-    mov ax, ds
-    push eax
-    mov ax, 0x10
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
+    pushad
+    push esp
     call isr_handler
-    pop eax
-    mov ds, ax
-    mov es, ax
-    mov fs, ax
-    mov gs, ax
-    popa
-    add esp, 8
+    add esp, 4 ; esp
+    cmp eax, 0
+    je .no_change
+    mov esp, eax
+.no_change:
+    popad
+    add esp, 8 ; int_no, err_code
     sti
-    iret
+    iretd
 
 
 %macro ISR_NOERRCODE 1

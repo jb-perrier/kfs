@@ -1,6 +1,6 @@
-use crate::{asm::{out_u16, out_u8}, text};
+use crate::{asm::{out_u16, out_u8, HandlerRegisters, InterruptRegisters}, text};
 
-use super::{handler::get_interrupt_handler, registers::Registers};
+use super::{handler::get_interrupt_handler, asm::GeneralRegisters};
 
 const IRQ0: u8 = 32;
 const IRQ1: u8 = 33;
@@ -54,15 +54,17 @@ pub fn remap_irq_table() {
 }
 
 #[no_mangle]
-pub extern "C" fn irq_handler(regs: Registers, int_no: u32, err_code: u32) {
+pub extern "C" fn irq_handler(regs: HandlerRegisters) -> u32 {
     unsafe {
+        let int_no = regs.interrupt.int_no as usize;
         if int_no >= 40 {
             out_u8(0xA0, 0x20);
         }
         out_u8(0x20, 0x20);
 
-        if let Some(handler) = get_interrupt_handler(int_no as usize) {
-            handler(regs, int_no, err_code);
+        if let Some(handler) = get_interrupt_handler(int_no) {
+            return handler(regs);
         }
+        0
     }
 }

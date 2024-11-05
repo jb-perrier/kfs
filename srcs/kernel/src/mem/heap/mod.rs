@@ -149,7 +149,7 @@ impl Heap {
 
 unsafe impl GlobalAlloc for HeapAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        let heap = &mut kernel().process.heap;
+        let heap = &mut kernel().heap;
         match heap.allocate(layout) {
             Ok(ptr) => ptr,
             Err(_) => {
@@ -159,7 +159,7 @@ unsafe impl GlobalAlloc for HeapAllocator {
     }
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
-        let heap = &mut kernel().process.heap;
+        let heap = &mut kernel().heap;
         if let Err(_) = heap.deallocate(ptr) {
             panic!("Failed to deallocate memory");
         }

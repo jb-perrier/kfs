@@ -51,11 +51,12 @@ pub fn execute() -> Result<(), ShellError> {
             }
             Some("signal") => {
                 if let Some(sub_cmd) = args.first().copied() {
+                    let kproc = kernel().processes.get_mut(0).unwrap();
                     if sub_cmd == "echo" {
                         let msg = args.get(1).copied().ok_or(ShellError::InvalidCommand)?;
-                        kernel().process.push_signal(Signal::Echo(msg.to_string()));
+                        kproc.push_signal(Signal::Echo(msg.to_string()));
                     }
-                    kernel().process.execute_signals();
+                    kproc.execute_signals();
                 }
             }
             Some("keyboard") => {
@@ -67,7 +68,7 @@ pub fn execute() -> Result<(), ShellError> {
                 }
             }
             Some("stack_save") => {
-                let heap = &mut kernel().process.heap;
+                let heap = &mut kernel().heap;
                 let stack = save_kernel_stack(heap).unwrap();
                 text::write_format!("Saved stack {:p} {}\n", stack.0, stack.1);
                 let stack_bottom = stack.0;

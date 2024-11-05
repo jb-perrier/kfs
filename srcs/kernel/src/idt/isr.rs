@@ -1,6 +1,6 @@
-use crate::{infinite_loop, text};
+use crate::{asm::{HandlerRegisters, InterruptRegisters}, infinite_loop, text};
 
-use super::{handler::{get_interrupt_handler, ControlFlow}, registers::Registers};
+use super::{handler::{get_interrupt_handler, ControlFlow}, asm::GeneralRegisters,};
 
 extern "C" {
     pub fn _isr0();
@@ -38,8 +38,9 @@ extern "C" {
 }
 
 #[no_mangle]
-pub extern "C" fn isr_handler(regs: Registers, int_no: u32, err_code: u32) {
-    if let Some(handler) = get_interrupt_handler(int_no as usize) {
-        handler(regs, int_no, err_code);
+pub extern "C" fn isr_handler(regs: HandlerRegisters) -> u32 {
+    if let Some(handler) = get_interrupt_handler(regs.interrupt.int_no as usize) {
+        return handler(regs);
     };
+    0
 }

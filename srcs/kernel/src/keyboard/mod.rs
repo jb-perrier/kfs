@@ -1,5 +1,8 @@
 use crate::{
-    asm, error::KernelError, idt::{handler::set_interrupt_handler, registers::Registers}, set_index, shell, text
+    asm::{self, GeneralRegisters, HandlerRegisters, InterruptRegisters},
+    error::KernelError,
+    idt::handler::set_interrupt_handler,
+    set_index, shell, text,
 };
 use layouts::{get_char, Key, AZERTY_MAP, AZERTY_MAP_MAJ, QWERTY_MAP, QWERTY_MAP_MAJ};
 
@@ -43,7 +46,7 @@ fn detect_layout() -> &'static [Key; 128] {
     }
 }
 
-fn keyboard_handler(reg: Registers, int_no: u32, err_code: u32) {
+fn keyboard_handler(regs: HandlerRegisters) -> u32 {
     let scancode = unsafe { asm::in_u8(KEYBOARD_PORT) };
     let layout = detect_layout();
     if scancode >= 128 {
@@ -96,4 +99,5 @@ fn keyboard_handler(reg: Registers, int_no: u32, err_code: u32) {
     unsafe {
         asm::out_u8(0x20, 0x20);
     }
+    0
 }

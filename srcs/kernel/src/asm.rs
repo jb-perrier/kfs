@@ -12,7 +12,6 @@ pub unsafe fn out_u16(port: u16, val: u16) {
 #[inline]
 pub unsafe fn out_u8(port: u16, val: u8) {
     asm!("out dx, al", in("dx") port, in("al") val);
-    
 }
 
 #[inline]
@@ -49,10 +48,25 @@ extern "C" {
     pub fn _idt_flush(idt: usize);
     pub fn _divide_zero();
     pub fn _clean_registers();
+    pub fn _switch_tcb(tcb: InterruptRegisters);
+    pub fn _update_stack_pointers(esp: u32, ebp: u32);
 }
 
+pub fn switch_tcb(tcb: InterruptRegisters) {
+    unsafe {
+        _switch_tcb(tcb);
+    }
+}
+
+pub fn update_stack_pointers(esp: u32, ebp: u32) {
+    unsafe {
+        _update_stack_pointers(esp, ebp);
+    }
+}
 pub fn clean_registers() {
-    unsafe { _clean_registers(); }
+    unsafe {
+        _clean_registers();
+    }
 }
 
 pub fn get_stack_top() -> *const u8 {
@@ -68,15 +82,21 @@ pub fn get_stack_ptr() -> *const u8 {
 }
 
 pub fn divide_zero() {
-    unsafe { _divide_zero(); }
+    unsafe {
+        _divide_zero();
+    }
 }
 
 pub fn enable_paging() {
-    unsafe { _enable_paging(); }
+    unsafe {
+        _enable_paging();
+    }
 }
 
 pub fn set_page_directory(page_directory: *mut PageDirectory) {
-    unsafe { _set_page_directory(page_directory); }
+    unsafe {
+        _set_page_directory(page_directory);
+    }
 }
 
 pub fn kernel_start() -> usize {
@@ -88,15 +108,21 @@ pub fn kernel_end() -> usize {
 }
 
 pub fn disable_interrupts() {
-    unsafe { _disable_interrupts(); }
+    unsafe {
+        _disable_interrupts();
+    }
 }
 
 pub fn enable_interrupts() {
-    unsafe { _enable_interrupts(); }
+    unsafe {
+        _enable_interrupts();
+    }
 }
 
 pub fn idt_flush(idt: *const IDTPointer) {
-    unsafe { _idt_flush(idt as usize); }
+    unsafe {
+        _idt_flush(idt as usize);
+    }
 }
 pub unsafe fn load_gdt(gdt: *const GdtDescriptor) {
     _load_gdt(gdt);
@@ -104,4 +130,70 @@ pub unsafe fn load_gdt(gdt: *const GdtDescriptor) {
 
 pub fn check_gdt() -> u32 {
     unsafe { _check_gdt() }
+}
+
+#[repr(C, packed)]
+#[derive(Default, Clone, Copy, Debug)]
+pub struct GeneralRegisters {
+    pub edi: u32,
+    pub esi: u32,
+    pub ebp: u32,
+    pub esp: u32,
+    pub ebx: u32,
+    pub edx: u32,
+    pub ecx: u32,
+    pub eax: u32,
+}
+
+impl GeneralRegisters {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
+#[repr(C, packed)]
+#[derive(Default, Clone, Copy, Debug)]
+pub struct InterruptRegisters {
+    pub int_no: u32,
+    pub err: u32,
+    pub eip: u32,
+    pub cs: u32,
+    pub eflags: u32,
+}
+
+impl InterruptRegisters {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+#[repr(C, packed)]
+#[derive(Default, Clone, Copy, Debug)]
+pub struct HandlerRegisters {
+    pub esp: u32,
+    pub general: GeneralRegisters,
+    pub interrupt: InterruptRegisters,
+}
+
+impl HandlerRegisters {
+    pub fn new() -> Self {
+        Self::default()
+    }
+}
+
+pub fn jump_in_new_process(esp: u32, ebp: u32, eip: u32, eflags: u32) {
+    unsafe {
+        asm!(
+            "mov esp, {0}",
+            "mov ebp, {1}",
+            "push {3}",
+            "popfd",
+            "jmp {2}",
+            in(reg) esp,
+            in(reg) ebp,
+            in(reg) eip,
+            in(reg) eflags,
+            options(noreturn)
+        );
+    }
 }

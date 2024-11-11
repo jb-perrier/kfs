@@ -16,37 +16,34 @@ pub use error::*;
 static mut HEAP_ALLOCATOR: HeapAllocator = HeapAllocator {};
 pub struct HeapAllocator {}
 
+#[derive(Debug, Clone, Copy)]
 pub struct Heap {
-    blocks: *mut HeapBlock,
+    blocks: Option<*mut HeapBlock>,
 }
 
 impl Heap {
-    pub fn new(start: usize, size: usize) -> Self {
+    pub const fn empty() -> Self {
         Heap {
-            blocks: HeapBlock::new(start, size),
+            blocks: None,
         }
     }
 
-    pub const fn empty() -> Self {
+    pub fn new_from_range(start: usize, size: usize) -> Self {
         Heap {
-            blocks: core::ptr::null_mut(),
+            blocks: Some(HeapBlock::new(start, size)),
         }
     }
 
     pub fn add_block(&mut self, start: usize, size: usize) {
-        let block = HeapBlock::new(start, size);
-        let mut current = self.blocks;
-        loop {
-            let heap = unsafe { &mut *current };
-            if heap.next().is_none() {
-                heap.set_next(block);
-                break;
-            }
-            current = heap.next().unwrap();
+        let new_block = HeapBlock::new(start, size);
+        match self.blocks {
+            None => self.blocks = Some(new_block),
+            Some(first_block) => add_block_to_chain(first_block, new_block),
         }
+        
     }
 
-    pub fn allocate(&mut self, mut layout: Layout) -> Result<*mut u8, Error> {
+    pub fn allocate(&mut self, mut layout: Layout) -> Result<*mut u8, HeapError> {
         trace!();
 
         debug! {
@@ -56,94 +53,57 @@ impl Heap {
             text::write_num!(layout.align());
             text::write_str("\n");
         }
-        
-        let mut current = self.blocks;
-        loop {
-            let block = unsafe { &mut *current };
-            match block.allocate(layout) {
-                Ok(ptr) => return Ok(ptr),
-                Err(Error::OutOfMemory) => { /* moving to next block */ }
-                Err(e) => return Err(e),
-            }
-            if let Some(next) = block.next() {
-                current = next;
-            } else {
-                break;
-            }
-        }
-        Err(Error::OutOfMemory)
+
+        let Some(mut current) = self.get_first_block_mut() else {
+            return Err(HeapError::OutOfMemory);
+        };
+        current.allocate_in_chain(layout).map_err(|_| HeapError::OutOfMemory)
     }
 
-    pub fn deallocate(&mut self, ptr: *mut u8) -> Result<(), Error> {
+    pub fn deallocate(&mut self, ptr: *mut u8) -> Result<(), HeapError> {
         trace!();
         debug! {
             text::write_str("Deallocating size: ");
             text::write_num!(self.get_size_from_ptr(ptr).unwrap());
             text::write_str("\n");
         }
-        
-        let mut current = self.blocks;
-        loop {
-            let block = unsafe { &mut *current };
-            match block.deallocate(ptr) {
-                Ok(()) => return Ok(()),
-                Err(Error::Unallocated) => {}
-                Err(e) => return Err(e),
-            }
-            if let Some(next) = block.next() {
-                current = next;
-            } else {
-                break;
-            }
-        }
-        Err(Error::Unallocated)
+
+        let Some(mut current) = self.get_first_block_mut() else {
+            return Err(HeapError::Unallocated);
+        };
+        current.deallocate(ptr).map_err(|_| HeapError::Unallocated)
     }
 
     pub fn is_allocated(&self, ptr: *mut u8) -> bool {
-        let mut current = self.blocks;
-        loop {
-            let block = unsafe { &*current };
-            if block.is_allocated(ptr) {
-                return true;
-            }
-            if let Some(next) = block.next() {
-                current = next;
-            } else {
-                break;
-            }
-        }
-        false
+        self.get_size_from_ptr(ptr).is_some()
     }
 
-    pub fn get_size_from_ptr(&self, ptr: *mut u8) -> Result<usize, Error> {
-        let mut current = self.blocks;
-        loop {
-            let block = unsafe { &*current };
-            if let Ok(size) = block.get_size_from_ptr(ptr) {
-                return Ok(size);
-            }
-            if let Some(next) = block.next() {
-                current = next;
-            } else {
-                break;
-            }
-        }
-        Err(Error::Unallocated)
+    pub fn get_size_from_ptr(&self, ptr: *mut u8) -> Option<usize> {
+        let Some(current) = self.get_first_block() else {
+            return None;
+        };
+        current.get_size_from_ptr_in_chain(ptr)
     }
 
     pub fn get_free_size(&self) -> usize {
-        let mut current = self.blocks;
-        let mut size = 0;
-        loop {
-            let block = unsafe { &*current };
-            size += block.get_free_size();
-            if let Some(next) = block.next() {
-                current = next;
-            } else {
-                break;
-            }
+        let Some(current) = self.get_first_block() else {
+            return 0;
+        };
+        current.get_free_size_in_chain()
+    }
+
+    fn get_first_block(&self) -> Option<&HeapBlock> {
+        match self.blocks {
+            Some(ptr) => Some(unsafe { &*ptr }),
+            None => None,
         }
-        size
+    }
+
+    fn get_first_block_mut(&self) -> Option<&mut HeapBlock> {
+        match self.blocks {
+            Some(ptr) => Some(unsafe { &mut *ptr }),
+            None => None,
+        }
     }
 }
 
@@ -163,5 +123,17 @@ unsafe impl GlobalAlloc for HeapAllocator {
         if let Err(_) = heap.deallocate(ptr) {
             panic!("Failed to deallocate memory");
         }
+    }
+}
+
+fn add_block_to_chain(first_block: *mut HeapBlock, new_block: *mut HeapBlock) {
+    let mut current = first_block;
+    loop {
+        let heap = unsafe { &mut *current };
+        if heap.next().is_none() {
+            heap.set_next(new_block);
+            break;
+        }
+        current = heap.next().unwrap();
     }
 }

@@ -7,11 +7,11 @@ pub enum ControlFlow {
     Halt,
 }
 
-pub type InterruptHandler = fn(HandlerRegisters) -> u32; // return esp
+pub type InterruptHandler = fn(HandlerRegisters); // return esp
 
 static mut INTERRUPT_HANDLERS: [InterruptHandler; 256] = [unhandled_interrupt; 256];
 
-pub fn fatal_handler(regs: HandlerRegisters) -> u32 {
+pub fn fatal_handler(regs: HandlerRegisters) {
     text::write_str("Fatal interrupt: ");
     match get_interrupt_name(regs.interrupt.int_no, regs.interrupt.err) {
         Some(name) => text::write_str(name),
@@ -21,7 +21,7 @@ pub fn fatal_handler(regs: HandlerRegisters) -> u32 {
     infinite_loop!();
 }
 
-pub fn unhandled_interrupt(regs: HandlerRegisters) -> u32 {
+pub fn unhandled_interrupt(regs: HandlerRegisters) {
     text::write_str("Unhandled interrupt: ");
     match get_interrupt_name(regs.interrupt.int_no, regs.interrupt.err) {
         Some(name) => text::write_str(name),

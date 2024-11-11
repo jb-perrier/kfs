@@ -5,19 +5,26 @@ use multiboot::information::{MemoryType, Multiboot};
 use paging::{directory::PageDirectory, PAGE_SIZE};
 
 use crate::{
-    asm, debug::print_from_process, error::KernelError, infinite_loop, kernel::{self, Kernel}, text, Colors
+    asm,
+    debug::print_from_process,
+    error::KernelError,
+    infinite_loop,
+    kernel::{self, Kernel},
+    process::address::VirtAddr,
+    text, Colors,
 };
 
 pub mod frame;
 pub mod heap;
 pub mod paging;
-pub mod virtual_addr;
 
-pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory, Heap), KernelError> {
+pub fn init(
+    multiboot: &Multiboot,
+) -> Result<(FrameAllocator, *mut PageDirectory, Heap), KernelError> {
     if !multiboot.has_memory_map() {
         return Err(KernelError::NoMemoryMap);
     }
-    
+
     let Some(mut region) = choose_region(multiboot) else {
         return Err(KernelError::NoSuitableMemoryRegionFound);
     };
@@ -40,7 +47,7 @@ pub fn init(multiboot: &Multiboot) -> Result<(FrameAllocator, *mut PageDirectory
         infinite_loop!();
     };
 
-    let heap = Heap::new(block as usize, FRAME_COUNT * FRAME_SIZE);
+    let heap = Heap::new_from_range(block.addr(), FRAME_COUNT * FRAME_SIZE);
     Ok((frame_allocator, page_directory_addr, heap))
 }
 
@@ -52,7 +59,11 @@ fn find_max_addr(boot_info: &Multiboot) -> usize {
             max_addr = end;
         }
     }
-    if max_addr > usize::MAX as u64 { usize::MAX } else { max_addr as usize }
+    if max_addr > usize::MAX as u64 {
+        usize::MAX
+    } else {
+        max_addr as usize
+    }
 }
 
 fn choose_region(boot_info: &Multiboot) -> Option<(usize, usize)> {
@@ -124,11 +135,14 @@ pub fn previous_aligned_from_addr(addr: usize, align: usize) -> usize {
     }
 }
 
-fn build_virtual(
-    physical: usize,
-    directory_index: usize,
-    table_index: usize,
-    offset: usize,
-) -> usize {
+fn build_virtual(directory_index: usize, table_index: usize, offset: usize) -> usize {
     (directory_index << 22) | (table_index << 12) | offset
+}
+
+pub fn decompose_virtual(vaddr: VirtAddr) -> (usize, usize, usize) {
+    let vaddr = vaddr.addr();
+    let dir = (vaddr >> 22) & 0x3FF;
+    let table = (vaddr >> 12) & 0x3FF;
+    let offset = vaddr & 0xFFF;
+    (dir, table, offset)
 }

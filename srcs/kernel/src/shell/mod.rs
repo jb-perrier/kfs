@@ -49,16 +49,6 @@ pub fn execute() -> Result<(), ShellError> {
             Some("quoi") => {
                 text::write_str("QUOICOUBEH\n");
             }
-            Some("signal") => {
-                if let Some(sub_cmd) = args.first().copied() {
-                    let kproc = kernel().processes.get_mut(0).unwrap();
-                    if sub_cmd == "echo" {
-                        let msg = args.get(1).copied().ok_or(ShellError::InvalidCommand)?;
-                        kproc.push_signal(Signal::Echo(msg.to_string()));
-                    }
-                    kproc.execute_signals();
-                }
-            }
             Some("keyboard") => {
                 let layout = args.first().copied().ok_or(ShellError::InvalidCommand)?;
                 if layout == "azerty" {

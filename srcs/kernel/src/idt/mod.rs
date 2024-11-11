@@ -1,18 +1,12 @@
 use handler::set_interrupt_handler;
-use irq::*;
-use isr::*;
+use entrypoint::*;
 
 use crate::{
-    asm,
-    error::KernelError,
-    kernel::{kernel, kernel_option},
-    process::ProcessState,
-    text,
+    asm, error::KernelError, infinite_loop, kernel::{kernel, kernel_option}, process::{address::VirtAddr, scheduler::tick_scheduler, ProcessState}, text
 };
 
 pub mod handler;
-pub mod irq;
-pub mod isr;
+pub mod entrypoint;
 pub mod registers;
 
 const FLAG_INTERRUPT_GATE: u8 = 0x8E;
@@ -109,72 +103,13 @@ pub fn init() -> Result<(), KernelError> {
     asm::idt_flush(&raw const IDT_POINTER);
 
     set_interrupt_handler(32, |regs| {
-        if kernel_option().is_none() {
-            return 0;
-        }
-        if !kernel().scheduler.running {
-            return 0;
-        }
-        let Some(current_process) = kernel().get_current_process() else {
-            return 0;
-        };
-
-        {
-            // text::write_format!("HandlerRegisters: {:#?}\n", regs);
-            let eip = regs.interrupt.eip;
-            // text::write_format!("EIP: {:#x}\n", eip);
-        }
-        // text::write_str("Switching task, old esp: ");
-        // text::write_num_hex!(regs.esp);
-        // text::write_str("\n");
-        current_process.stack_ptr = regs.esp as usize as *mut u8;
-
-        let Some(next_process) = kernel().get_next_scheduled_process() else {
-            return 0;
-        };
-
-        if next_process.state == ProcessState::Start {
-            next_process.state = ProcessState::Running;
-            text::write_format!("Starting process: {}\n", next_process.pid);
-            let eip = next_process.func as *const () as u32;
-            let eflags = 0x202;
-            let ebp = next_process.stack_top.addr() as u32;
-            let esp = next_process.stack_top.addr() as u32;
-            asm::jump_in_new_process(esp, ebp, eip, eflags);
-        }
-
-        // if next_process.pid == current_process.pid {
-        //     return 0;
-        // }
-
-        if next_process.state == ProcessState::Running {
-            // text::write_str("New esp: ");
-            // text::write_num_hex!(next_process.stack_ptr.addr() as u32);
-            // text::write_str("\n");
-            // text::write_format!("Swithing from {} to {}\n", current_process.pid, next_process.pid);
-            // unsafe {
-            //     let esp = next_process.stack_ptr.addr() as u32;
-            //     // core::arch::asm! {
-            //     //     "mov esp, {0}",
-            //     //     "add esp, 4",
-            //     //     "popad",
-            //     //     "add esp, 8",
-            //     //     "sti",
-            //     //     "iret",
-            //     //     in(reg) esp,
-            //     //     options(noreturn),
-            //     // }
-            //     return esp;
-            // }
-
-            let old_esp = regs.esp;
-            // text::write_format!("ESP saved: {:#x}", old_esp);
-            let new_esp = next_process.stack_ptr.addr() as u32;
-            // text::write_format!(" restored: {:#x}\n", new_esp);
-            return new_esp;
-        }
-        0
+        tick_scheduler(regs);
     });
+
+    set_interrupt_handler(14, |regs| {
+        infinite_loop!();
+    });
+
     Ok(())
 }
 

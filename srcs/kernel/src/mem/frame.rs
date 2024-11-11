@@ -1,6 +1,6 @@
 use core::ffi::c_void;
 
-use crate::{error::KernelError, libc::memset, text};
+use crate::{error::KernelError, libc::memset, process::address::PhysAddr, text, trace};
 
 use super::{next_aligned_from_addr, previous_aligned_from_addr};
 
@@ -28,24 +28,21 @@ impl FrameAllocator {
         }
     }
 
-    pub fn allocate_many(&mut self, count: usize) -> Result<*mut Frame, KernelError> {
+    pub fn allocate_many(&mut self, count: usize) -> Result<PhysAddr, KernelError> {
         if self.next_free + FRAME_SIZE * count > self.memory_block.1 {
             return Err(KernelError::FrameOutOfMemory);
         }
-        let frame = self.next_free;
+        let addr = self.next_free;
         self.next_free += FRAME_SIZE * count;
 
-        Ok(frame as *mut Frame)
+        let ptr_i32 = addr as *mut i32;
+        unsafe { memset(ptr_i32, 0, (FRAME_SIZE * count) as isize) };
+
+        Ok(PhysAddr::from_usize(addr))
     }
 
-    pub fn allocate(&mut self) -> Result<*mut Frame, KernelError> {
+    pub fn allocate(&mut self) -> Result<PhysAddr, KernelError> {
         self.allocate_many(1)
-    }
-
-    pub fn allocate_zeroed(&mut self) -> Result<*mut Frame, KernelError> {
-        let frame = self.allocate()?;
-        unsafe { memset(frame as *mut i32, 0, FRAME_SIZE as isize) };
-        Ok(frame)
     }
 
     pub fn position(&self) -> usize {

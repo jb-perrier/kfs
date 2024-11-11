@@ -1,4 +1,4 @@
-use crate::bits::{get_bit_at, set_bit_at};
+use crate::{bits::{get_bit_at, set_bit_at}, mem::frame::FRAME_SIZE};
 
 
 
@@ -17,6 +17,14 @@ impl PageTable {
         for i in 0..1024 {
             self.entries[i] = PageTableEntry(0);
         }
+    }
+
+    pub fn entry(&self, index: usize) -> &PageTableEntry {
+        &self.entries[index]
+    }
+
+    pub fn entry_mut(&mut self, index: usize) -> &mut PageTableEntry {
+        &mut self.entries[index]
     }
 }
 
@@ -41,6 +49,7 @@ impl PageTableEntry {
     }
 
     pub fn set_address(&mut self, address: usize) {
+        assert_eq!(address % FRAME_SIZE, 0);
         let masked_address = address & 0xFFFFF000;
         let flags = self.flags();
         self.0 = masked_address | flags;

@@ -1,1 +1,1 @@
-qemu-system-i386 -s -m 128M -cdrom ./bin/kfs.iso -d int,guest_errors -no-shutdown -no-reboot
+qemu-system-i386 -s -m 128M -cdrom ./bin/kfs.iso #-d int,guest_errors -no-shutdown -no-reboot

@@ -22,12 +22,36 @@ pub unsafe fn in_u8(port: u16) -> u8 {
 }
 
 #[inline]
-pub unsafe fn nop(count: usize) {
+pub fn nop(count: usize) {
     let mut i = 0;
     while i < count {
-        asm!("nop");
+        unsafe { asm!("nop"); }
         i += 1;
     }
+}
+
+#[no_mangle] static mut PROC_ESP: u32 = 0;
+
+pub fn set_proc_esp(esp: u32) {
+    unsafe {
+        PROC_ESP = esp;
+    }
+}
+
+pub fn get_proc_esp() -> u32 {
+    unsafe { PROC_ESP }
+}
+
+#[no_mangle] static mut PROC_PAGE_DIR: u32 = 0;
+
+pub fn set_proc_page_dir(page_dir: u32) {
+    unsafe {
+        PROC_PAGE_DIR = page_dir;
+    }
+}
+
+pub fn get_proc_page_dir() -> u32 {
+    unsafe { PROC_PAGE_DIR }
 }
 
 extern "C" {
@@ -170,7 +194,6 @@ impl InterruptRegisters {
 #[repr(C, packed)]
 #[derive(Default, Clone, Copy, Debug)]
 pub struct HandlerRegisters {
-    pub esp: u32,
     pub general: GeneralRegisters,
     pub interrupt: InterruptRegisters,
 }
@@ -181,18 +204,25 @@ impl HandlerRegisters {
     }
 }
 
-pub fn jump_in_new_process(esp: u32, ebp: u32, eip: u32, eflags: u32) {
+pub fn jump_in_new_process(esp: u32, ebp: u32, eip: u32, eflags: u32, cr3: u32) {
     unsafe {
         asm!(
+            "mov cr3, {4}",
             "mov esp, {0}",
             "mov ebp, {1}",
             "push {3}",
             "popfd",
-            "jmp {2}",
+            "push {2}", // push eip, since call can use the reg in which there is eip
+            "call process_start",
+            "sti",
+            "pop eax",
+            "call eax",
+            "call process_end",
             in(reg) esp,
             in(reg) ebp,
             in(reg) eip,
             in(reg) eflags,
+            in(reg) cr3,
             options(noreturn)
         );
     }

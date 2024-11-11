@@ -1,103 +1,119 @@
 use core::alloc::Layout;
 
+use address::{PhysAddr, VirtAddr};
 use alloc::{boxed::Box, vec::Vec};
+use process_running::ProcessRunning;
+use process_start::ProcessStart;
+use process_stopped::ProcessStopped;
 
 use crate::{
     asm::{GeneralRegisters, HandlerRegisters, InterruptRegisters},
     kernel::kernel,
     mem::{
         frame::{FrameAllocator, FRAME_SIZE},
-        heap::Heap,
+        heap::{self, Heap},
         paging::directory::PageDirectory,
     },
     signal::Signal,
     text,
 };
 
+pub mod address;
 pub mod scheduler;
+pub mod process_running;
+pub mod process_start;
+pub mod process_stopped;
+pub mod fork;
 
-const PROCESS_USER_STACK_SIZE: usize = 16_384;
+const PROCESS_USER_STACK_FRAME_SIZE: usize = 4;
+const PROCESS_USER_STACK_SIZE: usize = PROCESS_USER_STACK_FRAME_SIZE * FRAME_SIZE;
+const PROCESS_USER_VIRTUAL_START: VirtAddr = VirtAddr::from_usize(0x40000000);
+const PROCESS_USER_HEAP_FRAME_SIZE: usize = 16;
+const PROCESS_USER_HEAP_SIZE: usize = PROCESS_USER_HEAP_FRAME_SIZE * FRAME_SIZE;
+
+pub enum Process {
+    Start(ProcessStart),
+    Running(ProcessRunning),
+    Stopped(ProcessStopped),
+}
+
+impl Process {
+    pub fn new(owner: usize, func: fn() -> ()) -> Process {
+        Process::Start(ProcessStart::user(owner, func))
+    }
+
+    pub fn state(&self) -> ProcessState {
+        match self {
+            Process::Start(_) => ProcessState::Start,
+            Process::Running(_) => ProcessState::Running,
+            Process::Stopped(_) => ProcessState::Stopped,
+        }
+    }
+
+    pub fn pid(&self) -> ProcessId {
+        match self {
+            Process::Start(p) => p.pid,
+            Process::Running(p) => p.pid,
+            Process::Stopped(p) => p.pid,
+        }
+    }
+
+    pub fn as_start(&self) -> Option<&ProcessStart> {
+        match self {
+            Process::Start(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn as_start_mut(&mut self) -> Option<&mut ProcessStart> {
+        match self {
+            Process::Start(p) => Some(p),
+            _ => None,
+        }
+    }
+    
+    pub fn as_running(&self) -> Option<&ProcessRunning> {
+        match self {
+            Process::Running(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn as_running_mut(&mut self) -> Option<&mut ProcessRunning> {
+        match self {
+            Process::Running(p) => Some(p),
+            _ => None,
+        }
+    }
+
+    pub fn is_running(&self) -> bool {
+        self.as_running().is_some()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ProcessId(pub usize);
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum ProcessState {
     Start,
     Running,
-    Thread,
     Stopped,
 }
 
-pub struct Process {
-    pub page_directory: *mut PageDirectory,
-    pub heap: Heap,
+#[derive(Debug, Clone, Copy)]
+pub struct StackAddr {
+    pub bottom: VirtAddr,
+    pub top: VirtAddr,
+    pub ptr: VirtAddr,
 
-    pub signals: Vec<Signal>,
-    pub signal_callback: Option<Box<dyn Fn(Signal)>>,
-
-    pub stack_bottom: *mut u8,
-    pub stack_ptr: *mut u8,
-    pub stack_top: *mut u8,
-
-    pub pid: usize,
-    pub owner: usize,
-    pub state: ProcessState,
-
-    pub func: fn() -> (),
+    pub bottom_phys: PhysAddr,
 }
 
-impl Process {
-    pub fn kernel(page_directory: *mut PageDirectory, heap: Heap, pid: usize) -> Self {
-        Self {
-            page_directory,
-            heap,
-            signals: Vec::new(),
-            signal_callback: None,
-            stack_bottom: core::ptr::null_mut(),
-            stack_ptr: core::ptr::null_mut(),
-            stack_top: core::ptr::null_mut(),
-            pid,
-            owner: 0,
-            state: ProcessState::Running,
-            func: || (),
-        }
+pub fn find_free_pid() -> ProcessId {
+    let mut pid = 1;
+    while kernel().processes.iter().any(|p| p.pid() == ProcessId(pid)) {
+        pid += 1;
     }
-
-    pub fn user(pid: usize, owner: usize, func: fn() -> ()) -> Self {
-        let page_directory = kernel().page_directory;
-        let frame = kernel().frame_allocator.allocate_many(16).unwrap();
-        let mut heap = Heap::new(frame.addr(), FRAME_SIZE * 16);
-
-        let layout = Layout::from_size_align(PROCESS_USER_STACK_SIZE, 16).unwrap();
-        let stack = heap.allocate(layout).unwrap();
-        let stack_top = unsafe { stack.add(PROCESS_USER_STACK_SIZE) };
-
-        Self {
-            page_directory,
-            heap,
-            signals: Vec::new(),
-            signal_callback: None,
-            stack_bottom: stack,
-            stack_ptr: stack_top,
-            stack_top,
-            pid,
-            owner,
-            state: ProcessState::Start,
-            func,
-        }
-    }
-
-    pub fn push_signal(&mut self, signal: Signal) {
-        self.signals.push(signal);
-    }
-
-    pub fn execute_signals(&mut self) {
-        if let Some(callback) = &self.signal_callback {
-            while let Some(signal) = self.signals.pop() {
-                callback(signal);
-            }
-        }
-    }
-
-    pub fn pop_signal(&mut self) -> Option<Signal> {
-        self.signals.pop()
-    }
+    ProcessId(pid)
 }

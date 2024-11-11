@@ -46,7 +46,7 @@ fn detect_layout() -> &'static [Key; 128] {
     }
 }
 
-fn keyboard_handler(regs: HandlerRegisters) -> u32 {
+fn keyboard_handler(regs: HandlerRegisters) {
     let scancode = unsafe { asm::in_u8(KEYBOARD_PORT) };
     let layout = detect_layout();
     if scancode >= 128 {
@@ -99,5 +99,4 @@ fn keyboard_handler(regs: HandlerRegisters) -> u32 {
     unsafe {
         asm::out_u8(0x20, 0x20);
     }
-    0
 }

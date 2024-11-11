@@ -27,6 +27,7 @@ pub mod signal;
 pub mod text;
 pub mod time;
 pub mod user_api;
+pub mod socket;
 // pub mod vga_wip;
 
 mod kmain;
@@ -34,6 +35,7 @@ mod kmain;
 use self::{cmos::Cmos, time::Time};
 use alloc::{boxed::Box, format, vec::Vec};
 use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
+use user_api::fork;
 use core::{
     alloc::Layout,
     ffi::c_void,
@@ -80,8 +82,6 @@ pub fn start(multiboot: usize, magic: usize) {
         infinite_loop!();
     }
 
-    asm::enable_interrupts();
-
     let Ok((mut frame_allocator, page_directory, heap)) = mem::init(&boot_info) else {
         text::write_str_with_colors("Failed to init memory !", Colors::Red, Colors::Black);
         infinite_loop!();
@@ -93,6 +93,7 @@ pub fn start(multiboot: usize, magic: usize) {
         processes: Vec::new(),
         heap,
         page_directory,
+        sockets: Vec::new(),
     });
 
     kernel().scheduler.current = 0;
@@ -126,32 +127,22 @@ pub fn start(multiboot: usize, magic: usize) {
     let heap = &mut kernel().heap;
     heap.add_block(block.addr(), FRAME_COUNT * FRAME_SIZE);
 
-    // let styled_string = format!("{}Hello, world! {}This is a test\n", style(Colors::Green, Colors::Black), style(Colors::Purple, Colors::Black));
-    // let strs = parse_style_in_str(styled_string.as_str()).unwrap();
-    // for s in strs {
-    //     text::write_str_with_colors(&s.string, s.fore_color, s.back_color);
-    // }
-
-    // kernel().process.signal_callback = Some(Box::new(|sig| {
-    //     match sig {
-    //         signal::Signal::Echo(msg) => {
-    //             text::write_format!("Echo received: {}\n", msg);
-    //         }
-    //         sig => {
-    //             text::write_format!("Signal received: {:?}\n", sig);
-    //         }
-    //     }
-    // }));
-
     pub fn user_proc_main() {
+        trace!();
+        fork();
         let mut i = 0_u32;
+        let pid = kernel().get_current_process().unwrap().pid().0;
         loop {
-            text::write_str("1:");
+            asm::disable_interrupts();
+            text::write_num!(pid);
+            text::write_str(":");
             text::write_num!(i);
-            text::write_str(" ");
+            text::write_str("\n");
+            asm::enable_interrupts();
             i += 1;
-            if i > 100 {
-                i = 0;
+            if i > 10 {
+                // i = 0;
+                return;
             }
             for _ in 0..3000000 {
                 unsafe { core::arch::asm!("nop") }
@@ -159,69 +150,11 @@ pub fn start(multiboot: usize, magic: usize) {
         }
     }
 
-    pub fn user_proc_main2() {
-        let mut i = 0_u32;
-        loop {
-            text::write_str("2:");
-            text::write_num!(i);
-            text::write_str(" ");
-            i += 1;
-            if i > 100 {
-                i = 0;
-            }
-            for _ in 0..3000000 {
-                unsafe { core::arch::asm!("nop") }
-            }
-        }
-    }
-
-    let process1 = Process::user(1, 0, user_proc_main);
+    let process1 = Process::new(0, user_proc_main);
     kernel().processes.push(process1);
 
-    let process2 = Process::user(2, 0, user_proc_main2);
-    kernel().processes.push(process2);
-
+    asm::enable_interrupts();
     kernel().scheduler.run();
-
-    // shell::print_shell();
+    
     infinite_loop!();
 }
-
-// let number = 0_u64;
-// let heap_alloc = heap.allocate(Layout::for_value(&number)).unwrap();
-// text::write_str("Alloc addr: 0x");
-// text::write_num_hex!(heap_alloc as usize);
-// text::write_str(" size: ");
-// text::write_num!(heap.get_size_from_ptr(heap_alloc).unwrap());
-// text::write_str("\n");
-
-// heap.deallocate(heap_alloc);
-
-// let mut v: Vec<isize> = Vec::with_capacity(5);
-// v.push(56);
-// text::write_str("Value in vec: ");
-// text::write_num!(v[0]);
-// text::write_str("\n");
-
-// let kernel_start = asm::kernel_start();
-// let kernel_end = asm::kernel_end();
-// text::write_format!("Kernel end {kernel_start:#X}\n");
-// text::write_format!("Kernel end {kernel_end:#X}\n");
-
-// text::write_str_with_colors("Kernel initialized !\n", &Colors::Green, &Colors::Black);
-
-// let frame_allocator = &mut kernel().frame_allocator;
-// let user_page_directory =
-//     PageDirectory::new_from_frame_allocator(frame_allocator, true).unwrap();
-// let user_page_directory = unsafe { &mut *user_page_directory };
-// let first_user_page = frame_allocator.allocate().unwrap();
-// user_page_directory.add_frame_as_page(first_user_page, true);
-// text::write_str_with_colors("User space initialized !\n", &Colors::Green, &Colors::Black);
-
-// const STR_BUFFER: &str = "Dump GDT: hello this is a very nice text indeed!\n";
-// unsafe {
-//     dump(
-//         STR_BUFFER.as_ptr(),
-//         STR_BUFFER.as_ptr().add(STR_BUFFER.len()),
-//     )
-// };

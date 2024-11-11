@@ -67,7 +67,7 @@ pub unsafe fn print_as_hex(mut value: usize, max_width: usize) {
     }
 }
 
-pub fn save_kernel_stack(heap: &mut Heap) -> Result<(*mut u8, usize), heap::Error> {
+pub fn save_kernel_stack(heap: &mut Heap) -> Result<(*mut u8, usize), heap::HeapError> {
     unsafe {
         let stack_top = asm::get_stack_top();
         let stack_bottom = asm::get_stack_bottom();

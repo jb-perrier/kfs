@@ -32,7 +32,6 @@ const USER_DATA_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 3, SEGMENT_DATA_RDW
 const USER_STACK_SEGMENT: u8 = build_access(1, 1, 0, 0, 1, 1, 3, SEGMENT_DATA_RDWREXPD);
 
 static mut GDT_DESCRIPTOR_PTR: *mut GdtDescriptor = unsafe { 0x00000800 as *mut GdtDescriptor };
-// static mut TSS: Tss = Tss::new();
 
 const GDT_SIZE: usize = 7;
 
@@ -77,7 +76,6 @@ pub fn init() -> Result<(), KernelError> {
         GDT[4] = GdtEntry::new(0, 0xFFFFFFFF, USER_CODE_SEGMENT, 0xCF);
         GDT[5] = GdtEntry::new(0, 0xFFFFFFFF, USER_DATA_SEGMENT, 0xCF);
         GDT[6] = GdtEntry::new(0, 0xFFFFFFFF, USER_STACK_SEGMENT, 0xCF);
-        // GDT[7] = GdtEntry::new(addr_of!(TSS) as u32, core::mem::size_of::<Tss>() as u32, 0xE9, 0x00);
     }
 
     unsafe {

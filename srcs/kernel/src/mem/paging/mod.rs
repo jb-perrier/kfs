@@ -15,8 +15,9 @@ pub mod directory;
 pub mod table;
 
 #[derive(Clone, Copy)]
-pub enum Error {
+pub enum PagingError {
     PageDirectoryFull,
+    PageAlreadyMapped,
 }
 
 pub const PAGE_SIZE: usize = 4096;
@@ -25,21 +26,10 @@ pub fn init(
     frame_allocator: &mut FrameAllocator,
     multiboot: &Multiboot,
 ) -> Result<*mut PageDirectory, KernelError> {
-    let addr = PageDirectory::new_from_frame_allocator(frame_allocator, true)?;
-
-    // for mem in multiboot.memory_regions().unwrap() {
-    //     if (mem.base_address() + mem.length() > usize::MAX as u64) {
-    //         continue;
-    //     }
-    //     let start = mem.base_address() as usize;
-    //     let end = mem.base_address() as usize + mem.length() as usize;
-    //     unsafe {
-    //         (*addr).map_range_as_identity(mem.base_address() as usize, end, false);
-    //     }
+    let addr = PageDirectory::new_from_frame_allocator(frame_allocator, false)?;
+    // unsafe {
+    //     (*addr).identity();
     // }
-
-    // unsafe { (*addr).map_range_as_identity(0, 0xFFFFFFFF, false); }
-    unsafe { (*addr).identity(); }
     asm::set_page_directory(addr);
     asm::enable_paging();
     Ok(addr)

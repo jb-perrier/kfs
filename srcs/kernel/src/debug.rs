@@ -34,11 +34,11 @@ pub fn disable_debug() {
 }
 
 pub fn print_from_process(process: &Process, module: &str) {
-    let process_id = process.pid;
-    if (process_id == 0) {
+    let process_id = process.pid();
+    if (process_id.0 == 0) {
         text::write_str("kernel");
     } else {
-        text::write_num!(process_id);
+        text::write_num!(process_id.0);
     }
     text::write_str(".");
     text::write_str(module);

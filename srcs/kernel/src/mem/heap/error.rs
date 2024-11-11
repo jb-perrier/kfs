@@ -1,5 +1,5 @@
 #[derive(Debug, Clone, Copy)]
-pub enum Error {
+pub enum HeapError {
     OutOfMemory,
     Unallocated,
     NotOwned,

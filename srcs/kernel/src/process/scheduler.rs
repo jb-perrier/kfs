@@ -29,16 +29,22 @@ impl Scheduler {
 
     pub fn next(&mut self, processes: &[Process]) -> usize {
         let start = self.current;
+        let mut looped = false;
         loop {
             self.current += 1;
             if self.current >= processes.len() {
+                // text::write_format!("self.current = 0\n");
                 self.current = 0;
             }
             if self.current == start {
-                text::write_format!("No running process found, stopping !\n");
-                infinite_loop!();
+                if looped {
+                    text::write_format!("No running process found, stopping !\n");
+                    infinite_loop!();
+                }
+                looped = true;
+                // text::write_format!("Looped\n");
             }
-            if processes[self.current].is_running() {
+            if !processes[self.current].is_stopped() {
                 break;
             }
         }

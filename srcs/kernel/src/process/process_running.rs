@@ -1,6 +1,6 @@
 use alloc::{boxed::Box, vec::Vec};
 
-use crate::{mem::{heap::Heap, paging::directory::PageDirectory}, signal::Signal};
+use crate::{mem::{heap::Heap, paging::directory::PageDirectory}, signal::Signal, text};
 
 use super::{address::PhysAddr, ProcessId, StackAddr};
 

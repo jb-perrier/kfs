@@ -33,9 +33,9 @@ pub mod socket;
 mod kmain;
 
 use self::{cmos::Cmos, time::Time};
-use alloc::{boxed::Box, format, vec::Vec};
+use alloc::{boxed::Box, format, string::{String, ToString}, vec::Vec};
 use asm::{check_gdt, disable_interrupts, enable_interrupts, load_gdt};
-use user_api::fork;
+use user_api::{create_socket, fork, send_signal, set_signal_handler, socket_read, socket_write};
 use core::{
     alloc::Layout,
     ffi::c_void,
@@ -127,34 +127,71 @@ pub fn start(multiboot: usize, magic: usize) {
     let heap = &mut kernel().heap;
     heap.add_block(block.addr(), FRAME_COUNT * FRAME_SIZE);
 
-    pub fn user_proc_main() {
-        trace!();
-        fork();
-        let mut i = 0_u32;
-        let pid = kernel().get_current_process().unwrap().pid().0;
-        loop {
-            asm::disable_interrupts();
-            text::write_num!(pid);
-            text::write_str(":");
-            text::write_num!(i);
-            text::write_str("\n");
-            asm::enable_interrupts();
-            i += 1;
-            if i > 10 {
-                // i = 0;
-                return;
-            }
-            for _ in 0..3000000 {
-                unsafe { core::arch::asm!("nop") }
-            }
-        }
-    }
+    let process = Process::new(0, user_proc_fork);
+    kernel().processes.push(process);
 
-    let process1 = Process::new(0, user_proc_main);
-    kernel().processes.push(process1);
+    // let process = Process::new(0, user_proc_socket_receiver);
+    // kernel().processes.push(process);
 
     asm::enable_interrupts();
     kernel().scheduler.run();
     
     infinite_loop!();
+}
+
+const SOCKET_NAME: &str = "socket1";
+
+pub fn user_proc_socket_receiver() {
+    loop {
+        if let Ok(Some(payload)) = socket_read(SOCKET_NAME) {
+            text::write_str("Received: ");
+            text::write_str(&String::from_utf8(payload).unwrap());
+            text::write_str("\n");
+        }
+    }
+}
+pub fn user_proc_socket_sender() {
+    create_socket(SOCKET_NAME.to_string());
+
+    let payload = "Hello, world!".as_bytes();
+    if let Ok(_) = socket_write(SOCKET_NAME, payload.to_vec()) {
+        text::write_str("Sent: ");
+        text::write_str(&String::from_utf8(payload.to_vec()).unwrap());
+        text::write_str("\n");
+    }
+}
+
+pub fn user_proc_signal() {
+    set_signal_handler(Box::new(|signal| {
+        text::write_format!("Received signal: {}\n", signal.name());
+    }));
+
+    let proc = kernel().get_current_process().unwrap().as_running_mut().unwrap();
+    send_signal(signal::Signal::Exit, proc.pid);
+
+    infinite_loop!();
+}
+
+pub fn user_proc_fork() {
+    fork();
+
+    let mut i = 0_u32;
+    let proc = kernel().get_current_process().unwrap().as_running_mut().unwrap();
+    let pid = proc.pid.0;
+    loop {
+        asm::disable_interrupts();
+        text::write_num!(pid);
+        text::write_str(":");
+        text::write_num!(i);
+        text::write_str("\n");
+        asm::enable_interrupts();
+        i += 1;
+        if i > 10 {
+            // i = 0;
+            return;
+        }
+        for _ in 0..3000000 {
+            unsafe { core::arch::asm!("nop") }
+        }
+    }
 }

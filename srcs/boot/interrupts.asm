@@ -1,6 +1,8 @@
 extern PROC_ESP
 extern PROC_PAGE_DIR
 
+extern execute_signal_from_asm;
+
 %macro INT_COMMON_HANDLER 1
     pushad
     mov [PROC_ESP], esp         ; save esp
@@ -10,6 +12,7 @@ extern PROC_PAGE_DIR
     mov esp, [PROC_ESP]         ; set the new esp (in case we are switching task)
     mov eax, [PROC_PAGE_DIR]
     mov cr3, eax                ; set the new page directory (for the same reason)
+    call execute_signal_from_asm;
     popad
     add esp, 8                  ; int_no, err_code
     sti

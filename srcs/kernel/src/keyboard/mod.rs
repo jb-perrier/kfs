@@ -20,7 +20,7 @@ static mut LAYOUT: (&[Key; 128], &[Key; 128]) = (&AZERTY_MAP, &AZERTY_MAP_MAJ);
 // static mut LAYOUT: (&[Key; 128], &[Key; 128]) = (&QWERTY_MAP, &QWERTY_MAP_MAJ);
 
 pub fn init() -> Result<(), KernelError> {
-    set_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
+    // set_interrupt_handler(KEYBOARD_INTERRUPT, keyboard_handler);
     Ok(())
 }
 

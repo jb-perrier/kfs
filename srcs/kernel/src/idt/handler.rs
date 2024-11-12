@@ -22,13 +22,13 @@ pub fn fatal_handler(regs: HandlerRegisters) {
 }
 
 pub fn unhandled_interrupt(regs: HandlerRegisters) {
-    text::write_str("Unhandled interrupt: ");
-    match get_interrupt_name(regs.interrupt.int_no, regs.interrupt.err) {
-        Some(name) => text::write_str(name),
-        None => text::write_num!(regs.interrupt.int_no),
-    }
-    text::write_str("\n");
-    infinite_loop!();
+    // text::write_str("Unhandled interrupt: ");
+    // match get_interrupt_name(regs.interrupt.int_no, regs.interrupt.err) {
+    //     Some(name) => text::write_str(name),
+    //     None => text::write_num!(regs.interrupt.int_no),
+    // }
+    // text::write_str("\n");
+    // infinite_loop!();
 }
 
 pub fn get_interrupt_handler(index: usize) -> Option<InterruptHandler> {

@@ -72,6 +72,13 @@ impl Process {
         }
     }
     
+    pub fn as_stopped(&self) -> Option<&ProcessStopped> {
+        match self {
+            Process::Stopped(p) => Some(p),
+            _ => None,
+        }
+    }
+    
     pub fn as_running(&self) -> Option<&ProcessRunning> {
         match self {
             Process::Running(p) => Some(p),
@@ -88,6 +95,10 @@ impl Process {
 
     pub fn is_running(&self) -> bool {
         self.as_running().is_some()
+    }
+
+    pub fn is_stopped(&self) -> bool {
+        self.as_stopped().is_some()
     }
 }
 

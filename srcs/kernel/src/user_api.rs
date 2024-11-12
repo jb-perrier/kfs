@@ -19,17 +19,17 @@ fn dealloc(ptr: *mut u8, layout: core::alloc::Layout) -> Result<(), UserError> {
     heap.deallocate(ptr).map_err(UserError::HeapError)
 }
 
-pub fn send_signal(signal: Signal, pid: usize) -> Result<(), UserError> {
+pub fn send_signal(signal: Signal, pid: ProcessId) -> Result<(), UserError> {
     let processes = &mut kernel().processes;
-    let process = processes.get_mut(pid).ok_or(UserError::InvalidPid)?.as_running_mut().unwrap();
+    let process = processes.iter_mut().find(|p| p.pid() == pid).ok_or(UserError::InvalidPid)?.as_running_mut().unwrap();
     process.signals.push(signal);
     Ok(())
 }
 
 pub fn set_signal_handler(handler: Box<dyn Fn(Signal)>) -> Result<(), UserError> {
     let processes = &mut kernel().processes;
-    let current_pid = kernel().scheduler.current;
-    let process = processes.get_mut(current_pid).ok_or(UserError::InvalidPid)?.as_running_mut().unwrap();
+    let current_index = kernel().scheduler.current;
+    let process = processes.get_mut(current_index).ok_or(UserError::InvalidPid)?.as_running_mut().unwrap();
     process.signal_callback = Some(handler);
     Ok(())
 }
@@ -70,7 +70,26 @@ pub fn remove_socket(name: String) -> Result<(), UserError> {
     }
 }
 
-pub fn socket_read(name: String) -> Result<Option<Vec<u8>>, UserError> {
+pub fn socket_write(name: &str, data: Vec<u8>) -> Result<(), UserError> {
+    let mut index = None;
+    for (i, socket) in kernel().sockets.iter().enumerate() {
+        if socket.name == name {
+            index = Some(i);
+            break;
+        }
+    }
+
+    let current_pid = kernel().get_current_process().unwrap().pid();
+    if let Some(i) = index {
+        let socket = &mut kernel().sockets[i];
+        socket.send(current_pid, data);
+        Ok(())
+    } else {
+        Err(UserError::SocketNotFound)
+    }
+}
+
+pub fn socket_read(name: &str) -> Result<Option<Vec<u8>>, UserError> {
     let mut index = None;
     for (i, socket) in kernel().sockets.iter().enumerate() {
         if socket.name == name {

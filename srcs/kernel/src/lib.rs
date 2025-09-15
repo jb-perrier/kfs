@@ -127,11 +127,11 @@ pub fn start(multiboot: usize, magic: usize) {
     let heap = &mut kernel().heap;
     heap.add_block(block.addr(), FRAME_COUNT * FRAME_SIZE);
 
-    let process = Process::new(0, user_proc_fork);
+    let process = Process::new(0, user_proc_signal);
     kernel().processes.push(process);
 
-    // let process = Process::new(0, user_proc_socket_receiver);
-    // kernel().processes.push(process);
+    let process = Process::new(0, user_proc_socket_receiver);
+    kernel().processes.push(process);
 
     asm::enable_interrupts();
     kernel().scheduler.run();
@@ -189,9 +189,6 @@ pub fn user_proc_fork() {
         if i > 10 {
             // i = 0;
             return;
-        }
-        for _ in 0..3000000 {
-            unsafe { core::arch::asm!("nop") }
         }
     }
 }
